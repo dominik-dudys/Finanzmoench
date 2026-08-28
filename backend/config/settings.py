@@ -127,3 +127,16 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
+
+# E-Mail Konfiguration für IONOS
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.ionos.de'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# Deine persönlichen Zugangsdaten
+EMAIL_HOST_USER = 'deine.adresse@deine-domain.de'      # Deine echte IONOS E-Mail-Adresse
+EMAIL_HOST_PASSWORD = 'Platzhalter'         # Das Passwort für genau dieses Postfach
+
+# Der Standard-Absender
+DEFAULT_FROM_EMAIL = 'deine.adresse@deine-domain.de'   # Gleiche E-Mail-Adresse wie bei EMAIL_HOST_USER
