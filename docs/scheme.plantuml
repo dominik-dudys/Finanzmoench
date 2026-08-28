@@ -1,0 +1,74 @@
+@startuml
+hide circle
+skinparam linetype ortho
+
+entity "household" as h {
+  * household_id : BINARY(16)
+  --
+  name : VARCHAR(100)
+  currency : CHAR(3)
+}
+
+entity "person" as p {
+  * person_id : BINARY(16)
+  --
+  household_id : BINARY(16) <<FK>>
+  first_name : VARCHAR(100)
+}
+
+entity "user_auth" as ua {
+  * auth_id : BINARY(16)
+  --
+  person_id : BINARY(16) <<FK>>
+  provider : ENUM
+}
+
+entity "position_category" as pc {
+  * position_category_id : BINARY(16)
+  --
+  name : VARCHAR(100)
+  color_code : CHAR(7)
+}
+
+entity "cost_item" as ci {
+  * cost_item_id : BINARY(16)
+  --
+  household_id : BINARY(16) <<FK>>
+  position_category_id : BINARY(16) <<FK>>
+  interval : ENUM
+}
+
+entity "item_entry" as ie {
+  * item_entry_id : BINARY(16)
+  --
+  cost_item_id : BINARY(16) <<FK>>
+  amount : DECIMAL(10,2)
+  valid_from : DATE
+}
+
+entity "income" as inc {
+  * income_id : BINARY(16)
+  --
+  person_id : BINARY(16) <<FK>>
+  position_category_id : BINARY(16) <<FK>>
+  amount : DECIMAL(10,2)
+}
+
+entity "transactions" as tx {
+  * transaction_id : BINARY(16)
+  --
+  person_id : BINARY(16) <<FK>>
+  position_category_id : BINARY(16) <<FK>>
+  amount : DECIMAL(10,2)
+}
+
+h ||--o{ p
+p ||--|| ua
+h ||--o{ ci
+ci ||--o{ ie
+p ||--o{ inc
+p ||--o{ tx
+pc |o--o{ ci
+pc |o--o{ inc
+pc |o--o{ tx
+@enduml
