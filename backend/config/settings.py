@@ -145,9 +145,7 @@ EMAIL_HOST = 'smtp.ionos.de'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-# Deine persönlichen Zugangsdaten
-EMAIL_HOST_USER = 'deine.adresse@deine-domain.de'      # Deine echte IONOS E-Mail-Adresse
-EMAIL_HOST_PASSWORD = 'Platzhalter'         # Das Passwort für genau dieses Postfach
-
-# Der Standard-Absender
-DEFAULT_FROM_EMAIL = 'deine.adresse@deine-domain.de'   # Gleiche E-Mail-Adresse wie bei EMAIL_HOST_USER
+# Holt die Daten jetzt sicher aus der .env-Datei
+EMAIL_HOST_USER = os.environ.get('IONOS_MAIL')
+EMAIL_HOST_PASSWORD = os.environ.get('IONOS_PASSWORD')
+DEFAULT_FROM_EMAIL = os.environ.get('IONOS_MAIL')
