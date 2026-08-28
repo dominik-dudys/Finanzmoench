@@ -1,3 +1,5 @@
+use finanzmoench;
+
 CREATE TABLE IF NOT EXISTS household (
     household_id BINARY(16) DEFAULT (UUID_TO_BIN(UUID(), 1)) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -11,7 +13,7 @@ CREATE TABLE IF NOT EXISTS household (
 CREATE TABLE IF NOT EXISTS position_category (
     position_category_id BINARY(16) DEFAULT (UUID_TO_BIN(UUID(), 1)) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    colorcode CHAR(7)
+    color_code CHAR(7)
 );
 
 -- profile data
@@ -29,7 +31,7 @@ CREATE TABLE IF NOT EXISTS person (
 CREATE TABLE IF NOT EXISTS user_auth(
     auth_id BINARY(16) DEFAULT (UUID_TO_BIN(UUID(), 1)) PRIMARY KEY,
     person_id BINARY(16) NOT NULL,
-    provider ENUM('lokal', 'google', 'github', 'apple') NOT NULL,
+    provider ENUM('local', 'google', 'github', 'apple') NOT NULL,
     provider_uid VARCHAR(255),
     password_hash VARCHAR(255),
     last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
