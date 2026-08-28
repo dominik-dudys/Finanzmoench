@@ -84,3 +84,5 @@ CREATE TABLE IF NOT EXISTS transactions (
     FOREIGN KEY (person_id) REFERENCES person(person_id) ON DELETE CASCADE,
     FOREIGN KEY (position_category_id) REFERENCES position_category(position_category_id) ON DELETE SET NULL
 );
+
+commit;
