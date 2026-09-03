@@ -3,3 +3,8 @@
 
 /.env
 /.env
+
+/backend/households/migrations/
+/backend/accounts/migrations/
+/backend/core/migrations/
+/backend/finances/migrations/
