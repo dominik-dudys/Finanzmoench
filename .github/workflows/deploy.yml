@@ -3,7 +3,7 @@ name: deploy repo to server
 on:
   push:
     branches:
-      - feat/deploy
+      - main
 jobs:
   deploy:
     runs-on: ubuntu-latest
