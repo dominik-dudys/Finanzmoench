@@ -23,4 +23,4 @@ jobs:
         run: mysql -h 127.0.0.1 -uroot -p${{ secrets.DB_PASSWORT }} < ./backend/db/schema.sql
 
       - name: insert test data
-        run: mysql -h 127.0.0.1 -uroot -p${{ secrets.DB_PASSWORT }} < test-daten.sql
+        run: mysql -h 127.0.0.1 -uroot -p${{ secrets.DB_PASSWORT }} < ./backend/db/tests/test-daten.sql
