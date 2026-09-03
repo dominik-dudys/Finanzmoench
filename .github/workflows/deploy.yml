@@ -1,0 +1,21 @@
+name: deploy repo to server
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: connect and pull code
+        run: |
+          
+          mkdir -p ~/.ssh
+          
+          echo "${{secrets.SERVER_SSH_KEY}}" > ~/.ssh/github_key
+          chmod 600 ~/.ssh/github_key
+          
+          ssh-keyscan -H ${{secrets.SERVER_IP}} >> ~/.ssh/known_hosts
+          
+          ssh -i ~/.ssh/github_key ${{secrets.SERVER_USER}}@${{secrets.SERVER_IP}} "cd Finanzmoench && git pull origin main && docker compose up -d --build"
