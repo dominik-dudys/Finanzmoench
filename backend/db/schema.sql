@@ -1,4 +1,3 @@
-CREATE DATABASE IF NOT EXISTS finanzmoench;
 use finanzmoench;
 
 CREATE TABLE IF NOT EXISTS household (
