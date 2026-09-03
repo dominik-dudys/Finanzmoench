@@ -31,7 +31,7 @@ SECRET_KEY = 'django-insecure-ry9j+=208ih642u@kz432$c5y_x1+k(f2w%=_^(h&@^^)^d*#%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['finanzmönch.de', 'www.finanzmönch.de']  # Für Produktion später echte Domain eintragen!!
+ALLOWED_HOSTS = ['finanzmönch.de', 'www.finanzmönch.de','http://www.xn--finanzmnch-kcb.de/']  # Für Produktion später echte Domain eintragen!!
 
 
 # Application definition
