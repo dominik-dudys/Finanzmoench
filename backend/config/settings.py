@@ -33,6 +33,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['finanzmönch.de', 'www.finanzmönch.de','xn--finanzmnch-kcb.de', 'www.xn--finanzmnch-kcb.de', '127.0.0.1', 'localhost']  # Für Produktion später echte Domain eintragen!!
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://finanzmönch.de",
+    "https://www.finanzmönch.de",
+    "https://xn--finanzmnch-kcb.de",
+    "https://www.xn--finanzmnch-kcb.de",
+]
 
 # Application definition
 
