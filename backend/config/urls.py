@@ -22,4 +22,6 @@ urlpatterns = [
 
     path('accounts/', include('allauth.urls')),
     path('api/auth/', include('allauth.headless.urls')),
+
+    path('finances/', include('finances.urls')),
 ]
