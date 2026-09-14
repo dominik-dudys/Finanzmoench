@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.headless',
     'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.github',
 
     # non django apps:
     "core",
@@ -194,7 +195,7 @@ SOCIALACCOUNT_PROVIDERS = {
         'APP': {
             'client_id': os.environ.get('GOOGLE_CLIENT_ID', ''),
             'secret': os.environ.get('GOOGLE_CLIENT_SECRET', ''),
-            'key': ''
+            'key': '',
         },
         'SCOPE': [
             'profile',
@@ -202,8 +203,16 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
         'AUTH_PARAMS': {
             'access_type': 'online',
-        }
-    }
+        },
+    },
+
+    'github': {
+        'APP': {
+            'client_id': os.environ.get('GITHUB_CLIENT_ID', ''),
+            'secret': os.environ.get('GITHUB_CLIENT_SECRET', ''),
+            'key': '',
+        },
+    },
 }
 
 # E-Mail Konfiguration für IONOS
