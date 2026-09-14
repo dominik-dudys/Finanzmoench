@@ -94,8 +94,8 @@ export function HomePage() {
         <section id="funktioniert" className="bg-muted py-16">
             <div className="mx-auto max-w-5xl px-6">
                 <div className="mx-auto mb-10 max-w-md text-center">
-                    <h2 className="text-2xl font-bold">In drei Schritten startklar</h2>
-                    <p className="mt-2 text-muted-foreground">Kein kompliziertes Setup nötig.</p>
+                    <h2 className="text-2xl font-bold">So funktioniert es</h2>
+                    <p className="mt-2 text-muted-foreground">In drei Schritten startklar. Kein kompliziertes Setup nötig.</p>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-3">

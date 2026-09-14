@@ -13,7 +13,7 @@ export function toAuthState(session: SessionResponse | undefined, isLoading: boo
     const pending2fa = flows.some((f) => f.id === 'mfa_authenticate' && f.is_pending);
 
     if(pending2fa) return {status: 'pending_2fa'};
-    if(session.meta?.is_authentificated && session.data?.user){
+    if(session.meta?.is_authenticated && session.data?.user){
         return {status: 'authenticated', user: session.data.user};
     }
     return {status: "anonymous"};

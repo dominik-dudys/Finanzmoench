@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     "rest_framework",
     "corsheaders",
+    'allauth.socialaccount.providers.figma',
 
     # Allauth Core, Account and Socialaccount
 
@@ -156,8 +157,11 @@ ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 
 MFA_SUPPORTED_TYPES = ['totp', 'recovery_codes']
 
-HEADLESS_ONLY = True
+HEADLESS_ONLY = False
 
+LOGIN_REDIRECT_URL = "http://localhost:5173/auth/callback"
+
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
 HEADLESS_FRONTEND_URLS = {
     "account_confirm_email": "http://localhost:5173/verify-email/{key}",
@@ -213,9 +217,26 @@ SOCIALACCOUNT_PROVIDERS = {
             'secret': os.environ.get('GITHUB_CLIENT_SECRET', ''),
             'key': '',
         },
+        'SCOPE': ['user:email'],
     },
 }
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'allauth': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
 # E-Mail Konfiguration für IONOS
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.ionos.de'

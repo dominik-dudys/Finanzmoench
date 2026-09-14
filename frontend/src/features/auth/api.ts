@@ -18,7 +18,7 @@ export interface SessionResponse {
         flows?: SessionFlow[];
     };
     meta?: {
-        is_authentificated: boolean;
+        is_authenticated: boolean;
     };
 }
 
