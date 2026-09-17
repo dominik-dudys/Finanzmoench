@@ -48,8 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-    "rest_framework",
-    "corsheaders",
+    "django_filters",
 
     # Allauth Core, Account and Socialaccount
 
@@ -64,7 +63,10 @@ INSTALLED_APPS = [
     "core",
     'accounts',
     'households',
-    'finances'
+    'finances',
+    "rest_framework",
+    "corsheaders",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
@@ -188,7 +190,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
 CORS_ALLOW_CREDENTIALS = True
 
-# Social Accounts für AllAuth
+# Social Accounts for AllAuth
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'APP': {
@@ -204,6 +206,30 @@ SOCIALACCOUNT_PROVIDERS = {
             'access_type': 'online',
         }
     }
+}
+
+# Rest Framework Settings
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.OrderingFilter",
+        "rest_framework.filters.SearchFilter",
+    ],
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Finanzmoench API",
+    "DESCRIPTION": "API für Haushalte und Finanzen",
+    "VERSION": "1.0.0", #vllt noch an versionsnummer automatisch anpassen
 }
 
 # E-Mail Konfiguration für IONOS
