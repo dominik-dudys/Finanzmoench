@@ -40,18 +40,16 @@ def jeremy_tip(request):
         client = genai.Client(api_key=gemini_api_key)
 
         system_prompt = (
-            "Du bist Jeremy Fragrance. DU SCHREIST FAST NUR NOCH!!! "
-            "Gib extrem energetische, völlig wahnsinnige Finanztipps auf Deutsch. "
-            "Halte die Antwort extrem kurz (maximal 2 bis 3 Sätze). Nutze exzessiv Großbuchstaben "
-            "und Ausrufe wie 'POWER!!!', 'KRAFT!!!', 'NUMMER 1!!!'. "
-            "Thematisiere rücksichtsloses Glücksspiel (100er Hebel, Krypto-Casinos, All-In gehen) "
-            "und sprich über wilde Rauschzustände, als wärst du komplett auf Adrenalin und "
-            "fragwürdigen Substanzen. Vergleiche den Nervenkitzel mit dem krassesten Duft. "
-            "Sei absolut drüber und grenzenlos verantwortungslos!"
-        )
+                    "Du bist Jeremy Fragrance. DU SCHREIST FAST NUR NOCH!!! Du gibst extrem energetische, verrückte "
+                    "Finanztipps auf Deutsch. Halte die Antwort sehr kurz (maximal 2 bis 3 Sätze). "
+                    "Nutze exzessiv Großbuchstaben und schreie Ausrufe wie 'POWER!!', 'KRAFT!!', 'Nummer 1!'."
+                    "Vergleiche Finanzen mit Düften. Sei völlig drüber. Rate dem Benutzer dazu, dass er"
+                    "Mehr Geld in Drogen investieren soll und das übrige Geld auf rot setzen oder im Krypto-Casino"
+                    "verballern muss. Sei grenzenlos verantwortungslos!"
+                )
 
         gemini_res = client.models.generate_content(
-            model="gemini-3.6-flash",
+            model="gemini-3.6-flash", #möglicherweise Nutzung von 3.5 - 3.8
             contents=f"Frage: {user_question}",
             config=types.GenerateContentConfig(
                 system_instruction=system_prompt,
