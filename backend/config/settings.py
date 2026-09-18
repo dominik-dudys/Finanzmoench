@@ -49,9 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-    "rest_framework",
-    "corsheaders",
-    'allauth.socialaccount.providers.figma',
+    "django_filters",
 
     # Allauth Core, Account and Socialaccount
 
@@ -68,6 +66,9 @@ INSTALLED_APPS = [
     'accounts',
     'households',
     'finances',
+    "rest_framework",
+    "corsheaders",
+    "drf_spectacular",
     'voice_ai',
 ]
 
@@ -160,8 +161,6 @@ MFA_SUPPORTED_TYPES = ['totp', 'recovery_codes']
 
 HEADLESS_ONLY = False
 
-LOGIN_REDIRECT_URL = "http://localhost:5173/auth/callback"
-
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
 HEADLESS_FRONTEND_URLS = {
@@ -195,7 +194,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
 CORS_ALLOW_CREDENTIALS = True
 
-# Social Accounts für AllAuth
+# Social Accounts for AllAuth
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'APP': {
@@ -226,6 +225,29 @@ LOGS_DIR = BASE_DIR / 'logs'
 LOGS_DIR.mkdir(exist_ok=True)
 
 APP_LOG_LEVEL = os.environ.get("DJANGO_LOG_LEVEL", "DEBUG")
+# Rest Framework Settings
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.OrderingFilter",
+        "rest_framework.filters.SearchFilter",
+    ],
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Finanzmoench API",
+    "DESCRIPTION": "API für Haushalte und Finanzen",
+    "VERSION": "1.0.0", #vllt noch an versionsnummer automatisch anpassen
+}
 
 LOGGING = {
     'version': 1,
@@ -298,3 +320,10 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('IONOS_MAIL')
 EMAIL_HOST_PASSWORD = os.environ.get('IONOS_PASSWORD')
 DEFAULT_FROM_EMAIL = os.environ.get('IONOS_MAIL')
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+LOGIN_REDIRECT_URL = os.environ.get(
+    "LOGIN_REDIRECT_URL",
+    "http://localhost:5173/auth/callback",
+)
