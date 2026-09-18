@@ -1,11 +1,11 @@
 import {type AuthState, toAuthState} from "@/features/auth/auth-state.ts";
 import {createContext, type ReactNode, useContext} from "react";
-import {useQuery} from "@tanstack/react-query";
-import {getSession} from "@/features/auth/api.ts";
+import {type QueryObserverResult, useQuery} from "@tanstack/react-query";
+import {getSession, type SessionResponse} from "@/features/auth/api.ts";
 
 interface AuthContextValue {
     state: AuthState;
-    refetch: () => void;
+    refetch: () => Promise<QueryObserverResult<SessionResponse>>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
