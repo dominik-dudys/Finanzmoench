@@ -67,7 +67,8 @@ INSTALLED_APPS = [
     "core",
     'accounts',
     'households',
-    'finances'
+    'finances',
+    'voice_ai',
 ]
 
 MIDDLEWARE = [
