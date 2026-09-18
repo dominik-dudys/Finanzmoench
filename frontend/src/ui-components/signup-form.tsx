@@ -10,6 +10,7 @@ import {
   FieldSeparator,
 } from "@/ui-components/ui/field"
 import { Input } from "@/ui-components/ui/input"
+import * as React from "react";
 
 export function SignupForm({
   className,
