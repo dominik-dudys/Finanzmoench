@@ -1,6 +1,7 @@
 from django.shortcuts import render
 import os
 import sys
+import logging
 import traceback
 import requests
 from urllib.parse import quote
@@ -13,23 +14,26 @@ from rest_framework.permissions import AllowAny
 from google import genai
 from google.genai import types
 
+logger = logging.getLogger(__name__)
+
 @csrf_exempt
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def jeremy_tip(request):
     try:
-        print("--- STARTE JEREMY API ---", file=sys.stderr)
+        logger.info("--- STARTE JEREMY API ---")
         user_question = request.data.get("question", "Wie investiere ich mein Geld?")
+        logger.debug("Userfrage empfangen: %s", user_question)
 
         gemini_api_key = os.environ.get("GEMINI_API_KEY")
         fish_api_key = os.environ.get("FISH_API_KEY")
         voice_id = os.environ.get("FISH_VOICE_ID")
 
         if not gemini_api_key or not fish_api_key or not voice_id:
-            print("FEHLER: Ein API Key oder die Fish Voice ID fehlt in der .env", file=sys.stderr)
+            logger.error("Abbruch: Ein API Key oder die Fish Voice ID fehlt in der .env!")
             return HttpResponse("Fehler: API Keys fehlen", status=500)
 
-        print("-> Sende Anfrage an Gemini...", file=sys.stderr)
+        logger.info("Sende Anfrage an Gemini...")
         client = genai.Client(api_key=gemini_api_key)
 
         system_prompt = (
@@ -49,9 +53,9 @@ def jeremy_tip(request):
             )
         )
         jeremy_text = gemini_res.text.strip().replace("\n", " ")
-        print(f"Gemini Text: {jeremy_text}", file=sys.stderr)
+        logger.debug("Gemini Antwort generiert: %s", jeremy_text)
 
-        print("-> Sende Anfrage an Fish Audio...", file=sys.stderr)
+        logger.info("Sende Text an Fish Audio für MP3-Generierung...")
         tts_url = "https://api.fish.audio/v1/tts"
 
         headers = {
@@ -69,19 +73,18 @@ def jeremy_tip(request):
         tts_response = requests.post(tts_url, json=data, headers=headers)
 
         if not tts_response.ok:
-            print(f"FISH AUDIO FEHLER: {tts_response.text}", file=sys.stderr)
+            logger.error("Fish Audio API Fehler [Status %s]: %s", tts_response.status_code, tts_response.text)
             return HttpResponse(f"Fish Audio Fehler: {tts_response.text}", status=500)
 
-        print("Fish Audio erfolgreich generiert!", file=sys.stderr)
+        logger.info("Fish Audio MP3 erfolgreich empfangen. Sende Response an Client.")
 
         response = HttpResponse(tts_response.content, content_type="audio/mpeg")
         response["X-Jeremy-Text"] = quote(jeremy_text)
         response["Access-Control-Expose-Headers"] = "X-Jeremy-Text"
-        print("--- ENDE ERFOLGREICH ---", file=sys.stderr)
+        logger.info("--- ENDE ERFOLGREICH ---")
 
         return response
 
     except Exception as e:
-        print(f"ABSTURZ IN DER VIEW: {str(e)}", file=sys.stderr)
-        traceback.print_exc(file=sys.stderr)
+        logger.critical("Kritischer Fehler in der jeremy_tip View: %s", str(e), exc_info=True)
         return HttpResponse(f"Server Fehler: {str(e)}", status=500)

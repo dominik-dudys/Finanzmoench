@@ -27,6 +27,7 @@ services:
     volumes:
       - ./backend:/app
       - static_volume:/app/staticfiles
+      - ./backend/logs:/app/logs
     expose:
       - "8000"
     environment:
