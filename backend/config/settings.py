@@ -160,8 +160,6 @@ MFA_SUPPORTED_TYPES = ['totp', 'recovery_codes']
 
 HEADLESS_ONLY = False
 
-LOGIN_REDIRECT_URL = "http://localhost:5173/auth/callback"
-
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
 HEADLESS_FRONTEND_URLS = {
@@ -248,3 +246,10 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('IONOS_MAIL')
 EMAIL_HOST_PASSWORD = os.environ.get('IONOS_PASSWORD')
 DEFAULT_FROM_EMAIL = os.environ.get('IONOS_MAIL')
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+LOGIN_REDIRECT_URL = os.environ.get(
+    "LOGIN_REDIRECT_URL",
+    "http://localhost:5173/auth/callback",
+)
