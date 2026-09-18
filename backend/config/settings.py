@@ -222,19 +222,69 @@ SOCIALACCOUNT_PROVIDERS = {
     },
 }
 
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(exist_ok=True)
+
+APP_LOG_LEVEL = os.environ.get("DJANGO_LOG_LEVEL", "DEBUG")
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} [{levelname}] {module}: {message}',
+            'style': '{',
+        },
+        'detailed_file': {
+            'format': '{asctime} [{levelname}] {name}.{funcName}:{lineno} - {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
         },
+        'file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': LOGS_DIR / 'django_errors.log',
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 0,
+            'formatter': 'detailed_file',
+            'encoding': 'utf-8',
+        }
     },
     'loggers': {
         'allauth': {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': True,
+        },
+        'accounts': {
+                    'handlers': ['console', 'file'],
+                    'level': APP_LOG_LEVEL,
+                    'propagate': False,
+        },
+        'finances': {
+                    'handlers': ['console', 'file'],
+                    'level': APP_LOG_LEVEL,
+                    'propagate': False,
+        },
+        'households': {
+                    'handlers': ['console', 'file'],
+                    'level': APP_LOG_LEVEL,
+                    'propagate': False,
+        },
+        'voice_ai': {
+                    'handlers': ['console', 'file'],
+                    'level': APP_LOG_LEVEL,
+                    'propagate': False,
+        },
+        'django': {
+                    'handlers': ['console', 'file'],
+                    'level': 'INFO',
         },
     },
 }
