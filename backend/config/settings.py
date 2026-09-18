@@ -29,13 +29,14 @@ SECRET_KEY = 'django-insecure-ry9j+=208ih642u@kz432$c5y_x1+k(f2w%=_^(h&@^^)^d*#%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['finanzmönch.de', 'www.finanzmönch.de','xn--finanzmnch-kcb.de', 'www.xn--finanzmnch-kcb.de', '127.0.0.1', 'localhost',]  # Für Produktion später echte Domain eintragen!!
+ALLOWED_HOSTS = ['finanzmönch.de', 'www.finanzmönch.de','xn--finanzmnch-kcb.de', 'www.xn--finanzmnch-kcb.de', '127.0.0.1', 'localhost', '127.0.0.1:8000']  # Für Produktion später echte Domain eintragen!!
 
 CSRF_TRUSTED_ORIGINS = [
     "https://finanzmönch.de",
     "https://www.finanzmönch.de",
     "https://xn--finanzmnch-kcb.de",
     "https://www.xn--finanzmnch-kcb.de",
+    "http://localhost:5173",
 ]
 
 # Application definition
@@ -58,6 +59,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.headless',
     'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.github',
 
     # non django apps:
     "core",
@@ -67,6 +69,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "drf_spectacular",
+    'voice_ai',
 ]
 
 MIDDLEWARE = [
@@ -156,8 +159,9 @@ ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 
 MFA_SUPPORTED_TYPES = ['totp', 'recovery_codes']
 
-HEADLESS_ONLY = True
+HEADLESS_ONLY = False
 
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
 HEADLESS_FRONTEND_URLS = {
     "account_confirm_email": "http://localhost:5173/verify-email/{key}",
@@ -196,7 +200,7 @@ SOCIALACCOUNT_PROVIDERS = {
         'APP': {
             'client_id': os.environ.get('GOOGLE_CLIENT_ID', ''),
             'secret': os.environ.get('GOOGLE_CLIENT_SECRET', ''),
-            'key': ''
+            'key': '',
         },
         'SCOPE': [
             'profile',
@@ -204,8 +208,17 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
         'AUTH_PARAMS': {
             'access_type': 'online',
-        }
-    }
+        },
+    },
+
+    'github': {
+        'APP': {
+            'client_id': os.environ.get('GITHUB_CLIENT_ID', ''),
+            'secret': os.environ.get('GITHUB_CLIENT_SECRET', ''),
+            'key': '',
+        },
+        'SCOPE': ['user:email'],
+    },
 }
 
 # Rest Framework Settings
@@ -232,6 +245,22 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0", #vllt noch an versionsnummer automatisch anpassen
 }
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'allauth': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
 # E-Mail Konfiguration für IONOS
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.ionos.de'
@@ -242,3 +271,10 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('IONOS_MAIL')
 EMAIL_HOST_PASSWORD = os.environ.get('IONOS_PASSWORD')
 DEFAULT_FROM_EMAIL = os.environ.get('IONOS_MAIL')
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+LOGIN_REDIRECT_URL = os.environ.get(
+    "LOGIN_REDIRECT_URL",
+    "http://localhost:5173/auth/callback",
+)

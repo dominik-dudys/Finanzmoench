@@ -3,8 +3,8 @@ import axios from "axios";
 export const apiClient = axios.create({
     baseURL: "/api",
     withCredentials: true,
-    xsrfCookieName: "cfrstoken",
-    xsrfHeaderName: "X-CFRSToken"
+    xsrfCookieName: "csrftoken",
+    xsrfHeaderName: "X-CSRFToken"
 });
 
 export interface ApiErrorEnvelope {
@@ -15,7 +15,7 @@ export interface ApiErrorEnvelope {
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        const envelope: ApiErrorEnvelope = error.respone?.data ?? {
+        const envelope: ApiErrorEnvelope = error.response?.data ?? {
             code: "network_error",
         };
         return Promise.reject(envelope)
