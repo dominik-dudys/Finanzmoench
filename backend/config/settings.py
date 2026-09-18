@@ -27,7 +27,7 @@ load_dotenv(BASE_DIR.parent / ".env")
 SECRET_KEY = 'django-insecure-ry9j+=208ih642u@kz432$c5y_x1+k(f2w%=_^(h&@^^)^d*#%'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "0") == "1"
 
 ALLOWED_HOSTS = ['finanzmönch.de', 'www.finanzmönch.de','xn--finanzmnch-kcb.de', 'www.xn--finanzmnch-kcb.de', '127.0.0.1', 'localhost', '127.0.0.1:8000']  # Für Produktion später echte Domain eintragen!!
 
@@ -37,6 +37,10 @@ CSRF_TRUSTED_ORIGINS = [
     "https://xn--finanzmnch-kcb.de",
     "https://www.xn--finanzmnch-kcb.de",
     "http://localhost:5173",
+    "https://xn--finanzmnch-kcb.de",
+    "https://www.xn--finanzmnch-kcb.de",
+    "http://localhost:5173",
+    "http://localhost",
 ]
 
 # Application definition
