@@ -1,4 +1,4 @@
-import {useAuth} from "@/features/auth/AuthContext.tsx";
+import {useAuth} from "@/features/auth/useAuth.ts";
 import {useNavigate} from "react-router";
 import {useEffect, useState} from "react";
 import {toAuthState} from "@/features/auth/auth-state.ts";
