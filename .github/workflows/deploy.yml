@@ -11,6 +11,8 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    env:
+      SECRET_KEY_BE: ${{ secrets.SECRET_KEY_BE }}
     services:
       mysql:
         image: mysql:8
