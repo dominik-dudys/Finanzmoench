@@ -4,3 +4,4 @@
 /.env
 **/*.mp3
 /backend/logs/
+/.idea/git_toolbox_prj.xml
