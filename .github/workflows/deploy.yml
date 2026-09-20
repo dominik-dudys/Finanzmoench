@@ -4,17 +4,101 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+
 jobs:
+  ci:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_DATABASE: test_db
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test_password
+          MYSQL_ROOT_PASSWORD: test_root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -ptest_root_password"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint frontend
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Typecheck frontend
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip' #cache python dependencies for faster deployment
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: python -m pip install -r requirements.txt
+
+      - name: Check Django configuration
+        working-directory: backend
+        env:
+          DB_NAME: test_db
+          DB_USER: test_user
+          DB_PASSWORD: test_password
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+        run: python manage.py check --deploy
+
+      - name: Test backend
+        working-directory: backend
+        env:
+          DB_NAME: test_db
+          DB_USER: test_user
+          DB_PASSWORD: test_password
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+        run: python manage.py test
+
   deploy:
+    needs: ci
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: connect, build, migrate and deploy
-        run: |
-          mkdir -p ~/.ssh
-          
-          echo "${{secrets.SERVER_SSH_KEY}}" > ~/.ssh/github_key
-          chmod 600 ~/.ssh/github_key
-          
-          ssh-keyscan -H ${{secrets.SERVER_IP}} >> ~/.ssh/known_hosts
-
-          ssh -i ~/.ssh/github_key ${{secrets.SERVER_USER}}@${{secrets.SERVER_IP}} "cd Finanzmoench && git pull origin main && docker compose build && docker compose up -d --wait db && docker compose run --rm --no-deps web python manage.py migrate --noinput && docker compose up -d --wait --remove-orphans"
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script_stop: true
+          script: |
+            cd Finanzmoench
+            git pull origin main --ff-only
+            docker compose build
+            docker compose up -d --wait db
+            docker compose run --rm --no-deps web python manage.py migrate --noinput
+            docker compose up -d --wait --remove-orphans
