@@ -28,9 +28,10 @@ urlpatterns = [
     path('api/auth/', include('allauth.headless.urls')),
 
     path('finances/', include('finances.urls')),
-    path('api/', include('voice_ai.urls')),
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/voice-ai/', include('voice_ai.urls')),
+    path('api/households/', include('households.urls')),
 
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 ]
 
