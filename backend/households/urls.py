@@ -11,7 +11,7 @@ from .views import (
 urlpatterns = [
     path('create/', CreateHouseholdView.as_view(), name='household-create'),
     path('join/', JoinHouseholdView.as_view(), name='household-join'),
-    path('me/', MyHouseholdsView.as_view(), name='my-households'),
+    path('myhouseholds'/', MyHouseholdsView.as_view(), name='my-households'),
     path('update/', UpdateHouseholdView.as_view(), name='update-household'),
     path('leave/', LeaveHouseholdView.as_view(), name='leave-household'),
     path('delete/', DeleteHouseholdView.as_view(), name='delete-household'),
