@@ -51,3 +51,15 @@ class JoinHouseholdView(APIView):
             return Response({"error": "Dieser Haushalt existisert nicht."}, status=status.HTTP_404_NOT_FOUND)
         except ValidationError:
             return Response({"error": "Ungültiges Format für die Haushalts-ID."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MyHouseholdsView(APIView):
+    @extend_schema(responses=HouseholdSerializer(many=True))
+    def get(self, request):
+        household = request.user.household
+
+        if household:
+            serializer = HouseholdSerializer([household], many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response([], status=status.HTTP_200_OK)
