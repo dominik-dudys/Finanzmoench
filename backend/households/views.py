@@ -63,3 +63,54 @@ class MyHouseholdsView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response([], status=status.HTTP_200_OK)
+
+
+class UpdateHouseholdView(APIView):
+    @extend_schema(request=HouseholdSerializer, responses=HouseholdSerializer)
+    def patch(self, request):
+        household = request.user.household
+
+        if not household:
+            return Response({"error": "Du bist aktuell in keinem Haushalt."}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = HouseholdSerializer(household, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LeaveHouseholdView(APIView):
+    @extend_schema(
+        responses=inline_serializer(
+            name='LeaveResponse',
+            fields={'message': serializers.CharField()}
+        )
+    )
+    def post(self, request):
+
+        if not request.user.household:
+            return Response({"error": "Du bist aktuell in keinem Haushalt."}, status=status.HTTP_400_BAD_REQUEST)
+
+        request.user.household = None
+        request.user.save()
+        return Response({"message": "Du hast den Haushalt erfolgreich verlassen."}, status=status.HTTP_200_OK)
+
+
+class DeleteHouseholdView(APIView):
+    @extend_schema(
+        responses=inline_serializer(
+            name='DeleteResponse',
+            fields={'message': serializers.CharField()}
+        )
+    )
+    def delete(self, request):
+        household = request.user.household
+
+        if not household:
+            return Response({"error": "Du bist aktuell in keinem Haushalt."}, status=status.HTTP_400_BAD_REQUEST)
+
+        household.delete()
+        return Response({"message": "Der Haushalt wurde erfolgreich aufgelöst."}, status=status.HTTP_200_OK)
