@@ -1,14 +1,9 @@
-import {type AuthState, toAuthState} from "@/features/auth/auth-state.ts";
-import {createContext, type ReactNode, useContext} from "react";
-import {type QueryObserverResult, useQuery} from "@tanstack/react-query";
-import {getSession, type SessionResponse} from "@/features/auth/api.ts";
+import {type ReactNode} from "react";
+import {useQuery} from "@tanstack/react-query";
+import {getSession} from "@/features/auth/api.ts";
+import {AuthContext} from "@/features/auth/auth-context.tsx";
+import {toAuthState} from "@/features/auth/auth-state.ts";
 
-interface AuthContextValue {
-    state: AuthState;
-    refetch: () => Promise<QueryObserverResult<SessionResponse>>;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({children}: {children: ReactNode}){
     const {data, isLoading, refetch} = useQuery({
@@ -19,14 +14,8 @@ export function AuthProvider({children}: {children: ReactNode}){
     });
 
     return(
-    <AuthContext.Provider value={{state: toAuthState(data, isLoading), refetch}}>
-        {children}
-    </AuthContext.Provider>
+   <AuthContext.Provider value={{state: toAuthState(data, isLoading), refetch}}>
+       {children}
+   </AuthContext.Provider>
     )
-}
-
-export function useAuth() {
-    const ctx = useContext(AuthContext);
-    if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-    return ctx;
 }
