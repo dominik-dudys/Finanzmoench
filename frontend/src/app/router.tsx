@@ -13,6 +13,8 @@ import {KategoriePage} from "@/app/pages/kategorie-page.tsx";
 import {JeremyPage} from "@/app/pages/jeremy-page.tsx";
 import {SettingsPage} from "@/app/pages/settings-page.tsx";
 import {ProfilePage} from "@/app/pages/profile-page.tsx";
+import {VerifyEmailPage} from "@/app/pages/verify-email-page.tsx";
+import {LoginCodePage} from "@/app/pages/login-code-page.tsx";
 
 
 export const router = createBrowserRouter([
@@ -22,7 +24,9 @@ export const router = createBrowserRouter([
         children: [
             {index: true, element: <HomePage/>},
             {path: 'login', element: <LoginPage/>},
+            {path: 'login/code', element: <LoginCodePage/>},
             {path: 'register', element: <RegisterPage/>},
+            {path: 'register/verify', element: <VerifyEmailPage/>},
             {path: 'forgot-password', element: <ForgotPassword/>}
         ],
     },

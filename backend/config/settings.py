@@ -160,6 +160,16 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+# bei registrierung wird ein Code verschickt
+ACCOUNT_EMAIL_VERIFICATION_BY_CODE_ENABLED = True
+
+
+#Bei login Code per mail bei Passwort Login
+ACCOUNT_LOGIN_BY_CODE_ENABLED = True
+ACCOUNT_LOGIN_BY_CODE_REQUIRED = {"password"}
+ACCOUNT_LOGIN_BY_CODE_SUPPORTS_RESEND = True
+ACCOUNT_ADAPTER = "accounts.adapter.AccountAdapter"
+ALLAUTH_USER_CODE_FORMAT = {"length": 6, "numeric": True, "dashed": False}
 
 MFA_SUPPORTED_TYPES = ['totp', 'recovery_codes']
 
@@ -315,7 +325,9 @@ LOGGING = {
     },
 }
 # E-Mail Konfiguration für IONOS
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+
 EMAIL_HOST = 'smtp.ionos.de'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
