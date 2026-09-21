@@ -15,7 +15,7 @@ from django.utils import timezone
 from django.db import transaction
 from decimal import Decimal
 from .models import CostItem, CostShare
-from .services import create_cost_item
+from .services import create_cost_item, update_cost_item
 from .serializers import CostItemSerializer
 from drf_spectacular.utils import extend_schema
 
@@ -59,6 +59,48 @@ class CreateCostItemView(APIView):
                     "cost_item_id": cost_item.cost_item_id
                 },
                 status=status.HTTP_201_CREATED
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdateCostItemView(APIView):
+    @extend_schema(request=CostItemSerializer)
+    def patch(self, request, cost_item_id):
+
+        try:
+            cost_item = CostItem.objects.get(
+                cost_item_id=cost_item_id,
+                household=request.user.household,
+                valid_until__isnull=True
+            )
+        except CostItem.DoesNotExist:
+            return Response(
+                {"error": "Kostenposten nicht gefunden oder bereits archiviert."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = CostItemSerializer(cost_item, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            validated_data = serializer.validated_data
+            shares_data = validated_data.pop('shares', None)
+
+            try:
+                updated_item = update_cost_item(
+                    cost_item=cost_item,
+                    update_data=validated_data,
+                    shares_data=shares_data
+                )
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            return Response(
+                {
+                    "message": "Kostenposten erfolgreich aktualisiert.",
+                    "cost_item_id": updated_item.cost_item_id
+                },
+                status=status.HTTP_200_OK
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
