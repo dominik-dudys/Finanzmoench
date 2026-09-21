@@ -34,3 +34,13 @@ export async function getSession(): Promise<SessionResponse> {
         throw err;
     }
 }
+
+export async function logout(): Promise<void> {
+    try {
+        await apiClient.delete("/auth/browser/v1/auth/session");
+    } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401)
+            return
+        throw error;
+    }
+}
