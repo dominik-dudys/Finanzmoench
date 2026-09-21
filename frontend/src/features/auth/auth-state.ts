@@ -6,6 +6,7 @@ export type AuthState =
     | {status: 'pending_2fa'}
     | {status: 'pending_verify_email'}
     | {status: 'pending_login_code'}
+    | {status: 'pending_password_reset'}
     | {status: 'authenticated'; user: AllauthUser };
 
 export function toAuthState(session: SessionResponse | undefined, isLoading: boolean): AuthState{
@@ -26,6 +27,9 @@ export function toAuthState(session: SessionResponse | undefined, isLoading: boo
 
     if(session.meta?.is_authenticated && session.data?.user){
         return {status: 'authenticated', user: session.data.user};
+    }
+    if (pending('password_reset_by_code')){
+        return {status: "pending_password_reset"};
     }
     return {status: "anonymous"};
 }

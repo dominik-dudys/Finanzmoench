@@ -15,6 +15,7 @@ import {SettingsPage} from "@/app/pages/settings-page.tsx";
 import {ProfilePage} from "@/app/pages/profile-page.tsx";
 import {VerifyEmailPage} from "@/app/pages/verify-email-page.tsx";
 import {LoginCodePage} from "@/app/pages/login-code-page.tsx";
+import {ResetPasswordPage} from "@/app/pages/reset-password-page.tsx";
 
 
 export const router = createBrowserRouter([
@@ -27,7 +28,8 @@ export const router = createBrowserRouter([
             {path: 'login/code', element: <LoginCodePage/>},
             {path: 'register', element: <RegisterPage/>},
             {path: 'register/verify', element: <VerifyEmailPage/>},
-            {path: 'forgot-password', element: <ForgotPassword/>}
+            {path: 'forgot-password', element: <ForgotPassword/>},
+            {path: 'forgot-password/reset', element: <ResetPasswordPage/>}
         ],
     },
     {

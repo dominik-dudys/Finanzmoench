@@ -65,6 +65,12 @@ export const confirmLoginCode = (code: string) =>
 export const resendLoginCode = () =>
     post("/code/resend");
 
+export const requestPasswordReset = (email: string) =>
+    post("/password/request", {email});
+
+export const resetPassword = (code: string, password: string) =>
+    post("/password/reset", {key: code, password})
+
 
 
 

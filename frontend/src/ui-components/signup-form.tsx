@@ -17,6 +17,7 @@ import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {useForm} from "react-hook-form";
 import {isAllauthResponse, signup} from "@/features/auth/api.ts";
+import {PasswordInput} from "@/ui-components/password-input.tsx";
 
 const signupSchema = z
     .object({
@@ -104,9 +105,8 @@ export function SignupForm({
                 <Field className="grid grid-cols-2 gap-4">
                   <Field>
                     <FieldLabel htmlFor="password">Passwort</FieldLabel>
-                    <Input
+                    <PasswordInput
                         id="password"
-                        type="password"
                         autoComplete="new-password"
                         aria-invalid={!!errors.password}
                         {...register("password")}
@@ -117,13 +117,7 @@ export function SignupForm({
                     <FieldLabel htmlFor="confirm-password">
                       Passwort wiederholen
                     </FieldLabel>
-                    <Input
-                        id="confirm-password"
-                        type="password"
-                        autoComplete="new-password"
-                        aria-invalid={!!errors.confirmPassword}
-                        {...register("confirmPassword")}
-                    />
+                    <PasswordInput id="confirm-password" autoComplete="new-password" {...register("confirmPassword")}/>
                     <FieldError errors={[errors.confirmPassword]}/>
                   </Field>
                 </Field>

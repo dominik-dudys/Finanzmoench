@@ -12,16 +12,19 @@ import {
 import { Input } from "@/ui-components/ui/input"
 import * as React from "react";
 import {z} from "zod";
-import {useNavigate} from "react-router";
+import {useLocation, useNavigate} from "react-router";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {useForm} from "react-hook-form";
 import {isAllauthResponse, login} from "@/features/auth/api.ts";
 import {toAuthState} from "@/features/auth/auth-state.ts";
+import {PasswordInput} from "@/ui-components/password-input.tsx";
+import {Alert, AlertDescription} from "@/ui-components/ui/alert.tsx";
+import {CheckCircle2Icon} from "lucide-react";
 
 const loginSchema = z.object({
   email: z.email("Bitte gib eine gültige E-Mail-Adresse ein"),
-  password: z.string().min(1, "Butte gib dein Passwort ein"),
+  password: z.string().min(1, "Bitte gib dein Passwort ein"),
 });
 
 type LoginValues = z.infer<typeof loginSchema>;
@@ -32,6 +35,10 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const location = useLocation();
+  const passwordReset = (location.state as {passwordReset?: boolean} | null)?.passwordReset === true;
+
 
   const {
     register,
@@ -82,6 +89,14 @@ export function LoginForm({
                   Bei Finanzmönch anmelden
                 </p>
               </div>
+              {passwordReset && (
+                  <Alert>
+                    <CheckCircle2Icon />
+                    <AlertDescription>
+                      Dein Passwort wurde geändert. Du kannst dich jetzt anmelden.
+                    </AlertDescription>
+                  </Alert>
+              )}
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
@@ -98,15 +113,14 @@ export function LoginForm({
                 <div className="flex items-center">
                   <FieldLabel htmlFor="password">Passwort</FieldLabel>
                   <a
-                    href="#"
+                    href="/forgot-password"
                     className="ml-auto text-sm underline-offset-2 hover:underline"
                   >
                     Passwort vergessen?
                   </a>
                 </div>
-                <Input
+                <PasswordInput
                     id="password"
-                    type="password"
                     autoComplete="current-password"
                     aria-invalid={!!errors.password}
                     {...register("password")}
