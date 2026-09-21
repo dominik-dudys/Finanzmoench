@@ -4,23 +4,84 @@ import { Button } from "@/ui-components/ui/button"
 import { Card, CardContent } from "@/ui-components/ui/card"
 import {
   Field,
-  FieldDescription,
+  FieldDescription, FieldError,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
 } from "@/ui-components/ui/field"
 import { Input } from "@/ui-components/ui/input"
 import * as React from "react";
+import {z} from "zod";
+import {useLocation, useNavigate} from "react-router";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {useForm} from "react-hook-form";
+import {isAllauthResponse, login} from "@/features/auth/api.ts";
+import {toAuthState} from "@/features/auth/auth-state.ts";
+import {PasswordInput} from "@/ui-components/password-input.tsx";
+import {Alert, AlertDescription} from "@/ui-components/ui/alert.tsx";
+import {CheckCircle2Icon} from "lucide-react";
+
+const loginSchema = z.object({
+  email: z.email("Bitte gib eine gültige E-Mail-Adresse ein"),
+  password: z.string().min(1, "Bitte gib dein Passwort ein"),
+});
+
+type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const location = useLocation();
+  const passwordReset = (location.state as {passwordReset?: boolean} | null)?.passwordReset === true;
+
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: {errors},
+  } = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const mutation = useMutation({
+    mutationFn: (v: LoginValues) => login(v.email, v.password),
+    onSuccess: async (res) => {
+      await queryClient.invalidateQueries({queryKey: ["auth", "session"]});
+      const next = toAuthState(res, false);
+      if (next.status === "authenticated"){
+        navigate("/dashboard", {replace: true});
+      } else if (next.status === "pending_login_code") {
+        navigate("/login/code");
+      } else if (next.status === "pending_verify_email"){
+        navigate("/register/verify");
+      } else {
+        setError("root", {message: "Anmeldung nicht möglich. Bitte versuche es später erneut"});
+      }
+    },
+    onError: (err) => {
+      if (isAllauthResponse(err) && err.status === 429){
+        setError("root", {message: "Zu viele Versuche. Bitte warte einen Moment"});
+      } else if (isAllauthResponse(err) && err.errors){
+        setError("root", {message: "E-Mail oder Passwort ist falsch"});
+      } else {
+        setError("root", {message: "Anmeldung fehlgeschlagen. Bitte versuche es später erneut"})
+      }
+    },
+  });
+
+  const onSubmit = handleSubmit((values) => mutation.mutate(values));
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8">
+          <form onSubmit={onSubmit} noValidate className="p-6 md:p-8">
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Willkommen zurück</h1>
@@ -28,29 +89,49 @@ export function LoginForm({
                   Bei Finanzmönch anmelden
                 </p>
               </div>
+              {passwordReset && (
+                  <Alert>
+                    <CheckCircle2Icon />
+                    <AlertDescription>
+                      Dein Passwort wurde geändert. Du kannst dich jetzt anmelden.
+                    </AlertDescription>
+                  </Alert>
+              )}
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
                   id="email"
                   type="email"
+                  autoComplete="email"
                   placeholder="m@example.com"
-                  required
+                  aria-invalid={!!errors.email}
+                  {...register("email")}
                 />
+                <FieldError errors={[errors.email]}/>
               </Field>
               <Field>
                 <div className="flex items-center">
                   <FieldLabel htmlFor="password">Passwort</FieldLabel>
                   <a
-                    href="#"
+                    href="/forgot-password"
                     className="ml-auto text-sm underline-offset-2 hover:underline"
                   >
                     Passwort vergessen?
                   </a>
                 </div>
-                <Input id="password" type="password" required />
+                <PasswordInput
+                    id="password"
+                    autoComplete="current-password"
+                    aria-invalid={!!errors.password}
+                    {...register("password")}
+                />
+                <FieldError errors={[errors.password]}/>
               </Field>
               <Field>
-                <Button type="submit">Anmelden</Button>
+                {errors.root && <FieldError>{errors.root.message}</FieldError>}
+                <Button type="submit" disabled={mutation.isPending}>
+                  {mutation.isPending ? "Wird angemeldet..." : "Anmelden"}
+                </Button>
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 Oder anmelden mit

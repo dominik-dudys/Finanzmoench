@@ -9,7 +9,7 @@ export function DashboardLayout() {
                 <nav className="grid grid-cols-3 items-center">
                     {/*Linke Seite*/}
                     <div className="flex items-center">
-                        <Link to="/">
+                        <Link to="/dashboard">
                             <img src="/finanzmoench-logo-text-transparent.png" alt="finanzmönch" className="h-10"/>
                         </Link>
                     </div>

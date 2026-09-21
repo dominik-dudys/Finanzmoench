@@ -4,23 +4,81 @@ import { Button } from "@/ui-components/ui/button"
 import { Card, CardContent } from "@/ui-components/ui/card"
 import {
   Field,
-  FieldDescription,
+  FieldDescription, FieldError,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
 } from "@/ui-components/ui/field"
 import { Input } from "@/ui-components/ui/input"
 import * as React from "react";
+import {z} from "zod";
+import {useNavigate} from "react-router";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {useForm} from "react-hook-form";
+import {isAllauthResponse, signup} from "@/features/auth/api.ts";
+import {PasswordInput} from "@/ui-components/password-input.tsx";
+
+const signupSchema = z
+    .object({
+      email: z.email("Bitte gib eine gültige E-Mail-Adresse ein"),
+      password: z.string().min(8, "Mindestens 8 Zeichen"),
+      confirmPassword: z.string(),
+    })
+    .refine((d) => d.password === d.confirmPassword, {
+      message: "Die Passwörter stimmen nicht überein",
+      path: ["confirmPassword"],
+    });
+
+type SignupValues = z.infer<typeof  signupSchema>;
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: {errors},
+  } = useForm<SignupValues>({
+    resolver: zodResolver(signupSchema),
+  });
+
+  const mutation = useMutation({
+    mutationFn: (v: SignupValues)=> signup(v.email, v.password),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({queryKey: ["auth", "session"]});
+      navigate("/register/verify");
+    },
+    onError: (err) => {
+      if (isAllauthResponse(err) && err.errors){
+        for (const e of err.errors){
+          if (e.param === "email" || e.param === "password"){
+            setError(e.param, {message: e.message});
+          } else {
+            setError("root", {message: e.message});
+          }
+        }
+      } else {
+        setError("root", {
+          message: "Registrierung fehlgeschlagen. Bitte versuche es später erneut",
+        });
+      }
+    },
+  });
+
+  const onSubmit = handleSubmit((values) => mutation.mutate(values));
+
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8">
+          <form onSubmit={onSubmit} noValidate className="p-6 md:p-8">
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Erstelle dein Konto</h1>
@@ -33,9 +91,12 @@ export function SignupForm({
                 <Input
                   id="email"
                   type="email"
+                  autoComplete="email"
                   placeholder="m@example.com"
-                  required
+                  aria-invalid={!!errors.email}
+                  {...register("email")}
                 />
+                <FieldError errors={[errors.email]} />
                 <FieldDescription>
                 Deine Daten sind bei uns sicher.
                 </FieldDescription>
@@ -44,13 +105,20 @@ export function SignupForm({
                 <Field className="grid grid-cols-2 gap-4">
                   <Field>
                     <FieldLabel htmlFor="password">Passwort</FieldLabel>
-                    <Input id="password" type="password" required />
+                    <PasswordInput
+                        id="password"
+                        autoComplete="new-password"
+                        aria-invalid={!!errors.password}
+                        {...register("password")}
+                    />
+                    <FieldError errors={[errors.password]}/>
                   </Field>
                   <Field>
                     <FieldLabel htmlFor="confirm-password">
                       Passwort wiederholen
                     </FieldLabel>
-                    <Input id="confirm-password" type="password" required />
+                    <PasswordInput id="confirm-password" autoComplete="new-password" {...register("confirmPassword")}/>
+                    <FieldError errors={[errors.confirmPassword]}/>
                   </Field>
                 </Field>
                 <FieldDescription>
@@ -58,7 +126,10 @@ export function SignupForm({
                 </FieldDescription>
               </Field>
               <Field>
-                <Button type="submit">Account erstellen</Button>
+                {errors.root && <FieldError>{errors.root.message}</FieldError>}
+                <Button type="submit" disabled={mutation.isPending}>
+                  {mutation.isPending ? "Wird erstellt..." : "Account erstellen"}
+                </Button>
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 Oder anmelden mit
