@@ -316,6 +316,10 @@ EMAIL_HOST = 'smtp.ionos.de'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
+# get stripe keys
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_PLUBLIC_KEY')
+
 # Holt die Daten jetzt sicher aus der .env-Datei
 EMAIL_HOST_USER = os.environ.get('IONOS_MAIL')
 EMAIL_HOST_PASSWORD = os.environ.get('IONOS_PASSWORD')

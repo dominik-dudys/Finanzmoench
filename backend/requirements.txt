@@ -11,3 +11,4 @@ django-filter
 drf-spectacular
 google-genai
 requests
+stripe
