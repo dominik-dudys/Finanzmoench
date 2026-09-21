@@ -73,3 +73,9 @@ def update_cost_item(*, cost_item: CostItem, update_data: dict, shares_data: lis
                     CostShare.objects.create(cost_item=cost_item, **share)
 
             return cost_item
+
+
+def delete_cost_item(*, cost_item: CostItem) -> CostItem:
+    cost_item.valid_until = timezone.now().date()
+    cost_item.save(update_fields=['valid_until'])
+    return cost_item

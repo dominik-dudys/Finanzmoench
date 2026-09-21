@@ -15,7 +15,7 @@ from django.utils import timezone
 from django.db import transaction
 from decimal import Decimal
 from .models import CostItem, CostShare
-from .services import create_cost_item, update_cost_item
+from .services import create_cost_item, update_cost_item, delete_cost_item
 from .serializers import CostItemSerializer
 from drf_spectacular.utils import extend_schema
 
@@ -104,3 +104,29 @@ class UpdateCostItemView(APIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteCostItemView(APIView):
+    def delete(self, request, cost_item_id):
+
+        try:
+            cost_item = CostItem.objects.get(
+                cost_item_id=cost_item_id,
+                household=request.user.household,
+                valid_until__isnull=True
+            )
+        except CostItem.DoesNotExist:
+            return Response(
+                {"error": "Kostenposten nicht gefunden oder bereits archiviert."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            delete_cost_item(cost_item=cost_item)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(
+            {"message": "Kostenposten erfolgreich entfernt."},
+            status=status.HTTP_200_OK
+        )
