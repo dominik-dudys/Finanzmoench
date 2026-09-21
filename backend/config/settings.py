@@ -330,7 +330,7 @@ LOGGING = {
 }
 # E-Mail Konfiguration für IONOS
 
-EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND') or 'django.core.mail.backends.smtp.EmailBackend'
 
 EMAIL_HOST = 'smtp.ionos.de'
 EMAIL_PORT = 587
