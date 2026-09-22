@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "drf_spectacular",
     'voice_ai',
+    'payment',
 ]
 
 MIDDLEWARE = [
