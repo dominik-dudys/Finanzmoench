@@ -7,10 +7,10 @@ import {useMutation} from "@tanstack/react-query";
 import {REGEXP_ONLY_DIGITS} from "input-otp";
 import {isAllauthResponse, resetPassword} from "@/features/auth/api.ts";
 import {useAuth} from "@/features/auth";
-import {Button} from "@/ui-components/ui/button";
-import {Card, CardContent} from "@/ui-components/ui/card";
-import {Field, FieldError, FieldGroup, FieldLabel} from "@/ui-components/ui/field";
-import {InputOTP, InputOTPGroup, InputOTPSlot} from "@/ui-components/ui/input-otp";
+import {Button} from "@/ui-components/ui/button.tsx";
+import {Card, CardContent} from "@/ui-components/ui/card.tsx";
+import {Field, FieldError, FieldGroup, FieldLabel} from "@/ui-components/ui/field.tsx";
+import {InputOTP, InputOTPGroup, InputOTPSlot} from "@/ui-components/ui/input-otp.tsx";
 import {PasswordInput} from "@/ui-components/password-input.tsx";
 
 const resetSchema = z

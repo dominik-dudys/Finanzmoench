@@ -5,10 +5,10 @@ import {Navigate, useNavigate} from "react-router";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {useState} from "react";
 import {Card, CardContent} from "@/ui-components/ui/card.tsx";
-import {Field, FieldDescription, FieldError, FieldGroup} from "@/ui-components/ui/field";
-import {InputOTP, InputOTPGroup, InputOTPSlot} from "@/ui-components/ui/input-otp";
+import {Field, FieldDescription, FieldError, FieldGroup} from "@/ui-components/ui/field.tsx";
+import {InputOTP, InputOTPGroup, InputOTPSlot} from "@/ui-components/ui/input-otp.tsx";
 import {REGEXP_ONLY_DIGITS} from "input-otp";
-import {Button} from "@/ui-components/ui/button";
+import {Button} from "@/ui-components/ui/button.tsx";
 
 function errorMessage(err: unknown, fallback: string) {
     if (isAllauthResponse(err) && err.status === 429) {

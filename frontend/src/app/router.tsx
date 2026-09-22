@@ -4,7 +4,7 @@ import {HomePage} from "@/app/pages/home-page.tsx";
 import {LoginPage} from "@/features/auth/login-page.tsx";
 import {DashboardLayout} from "@/app/layout/dashboard-layout.tsx";
 import {RegisterPage} from "@/features/auth/register-page.tsx";
-import {ForgotPassword} from "@/app/pages/forgot-password-page.tsx";
+import {ForgotPassword} from "@/app/pages/login/forgot-password-page.tsx";
 import {LoginCallbackPage} from "@/features/auth";
 import {ProtectedRoute} from "@/features/auth/protected-route.tsx";
 import {DashboardPage} from "@/app/pages/dashboard-page.tsx";
@@ -14,8 +14,9 @@ import {JeremyPage} from "@/app/pages/jeremy-page.tsx";
 import {SettingsPage} from "@/app/pages/settings-page.tsx";
 import {ProfilePage} from "@/app/pages/profile-page.tsx";
 import {VerifyEmailPage} from "@/app/pages/verify-email-page.tsx";
-import {LoginCodePage} from "@/app/pages/login-code-page.tsx";
-import {ResetPasswordPage} from "@/app/pages/reset-password-page.tsx";
+import {LoginCodePage} from "@/app/pages/login/login-code-page.tsx";
+import {ResetPasswordPage} from "@/app/pages/login/reset-password-page.tsx";
+import {HouseholdPage} from "@/app/pages/household-page.tsx";
 
 
 export const router = createBrowserRouter([
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
                   {path: 'jeremy', element: <JeremyPage/>},
                   {path: 'einstellungen', element: <SettingsPage/>},
                   {path: 'profil', element: <ProfilePage/>},
+                  {path: 'household', element: <HouseholdPage/>},
               ]
           }
       ]
