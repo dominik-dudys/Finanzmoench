@@ -13,6 +13,13 @@ from drf_spectacular.utils import extend_schema, inline_serializer
 class CreateHouseholdView(APIView):
     @extend_schema(request=HouseholdSerializer, responses=HouseholdSerializer)
     def post(self, request):
+
+        if request.user.household:
+            return Response(
+                {"error": "Du bist bereits Teil eines Haushalts. Bitte verlasse diesen zuerst, um einen neuen zu gründen."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         serializer = HouseholdSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -35,6 +42,13 @@ class JoinHouseholdView(APIView):
     )
 
     def post(self, request):
+
+        if request.user.household:
+                    return Response(
+                        {"error": "Du bist bereits Teil eines Haushalts. Bitte verlasse diesen zuerst, um einem neuen beizutreten."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
         household_id = request.data.get('household_id')
 
         if not household_id:
