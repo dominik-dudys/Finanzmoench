@@ -27,7 +27,7 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('api/auth/', include('allauth.headless.urls')),
 
-    path('finances/', include('finances.urls')),
+    path('api/finances/', include('finances.urls')),
     path('api/voice-ai/', include('voice_ai.urls')),
     path('api/households/', include('households.urls')),
 
