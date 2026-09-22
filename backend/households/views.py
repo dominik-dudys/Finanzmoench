@@ -9,7 +9,6 @@ from .serializers import HouseholdSerializer
 from accounts.models import Person
 from .services import create_household_for_user, join_existing_household, update_household, leave_household, delete_household
 from drf_spectacular.utils import extend_schema, inline_serializer
-from accounts.models import Person
 
 
 # Create your views here.
@@ -75,12 +74,13 @@ class MyHouseholdView(APIView):
     def get(self, request):
         household = request.user.household
 
-        if household:
-            data = HouseholdSerializer(household).data
-            data['member_count'] = Person.objects.filter(household=household).count()
-            return Response([data], status=status.HTTP_200_OK)
+        if not household:
+            return Response(None, status=status.HTTP_200_OK)
 
-        return Response(None, status=status.HTTP_200_OK)
+
+        data = HouseholdSerializer(household).data
+        data['member_count'] = Person.objects.filter(household=household).count()
+        return Response(data, status=status.HTTP_200_OK)
 
 class UpdateHouseholdView(APIView):
     @extend_schema(request=HouseholdSerializer, responses=HouseholdSerializer)

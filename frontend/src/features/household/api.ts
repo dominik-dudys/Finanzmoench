@@ -19,8 +19,8 @@ export interface HouseholdPayload {
 }
 
 export async function getMyHousehold(): Promise<Household | null> {
-    const res = await apiClient.get<Household[]>("households/myhouseholds/");
-    return res.data[0] ?? null;
+    const res = await apiClient.get<Household | null>("households/myhousehold/");
+    return res.data;
 }
 
 export async function updateHousehold(payload: HouseholdPayload): Promise<Household>{
