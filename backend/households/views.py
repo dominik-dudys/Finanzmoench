@@ -67,7 +67,7 @@ class JoinHouseholdView(APIView):
             return Response({"error": "Ungültiges Format für die Haushalts-ID."}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class MyHouseholdsView(APIView):
+class MyHouseholdView(APIView):
     @extend_schema(responses=HouseholdSerializer)
     def get(self, request):
         household = request.user.household
