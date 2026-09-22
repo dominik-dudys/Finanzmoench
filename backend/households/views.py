@@ -6,6 +6,7 @@ from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from .models import Household
 from .serializers import HouseholdSerializer
+from accounts.models import Person
 from .services import create_household_for_user, join_existing_household, update_household, leave_household, delete_household
 from drf_spectacular.utils import extend_schema, inline_serializer
 
@@ -131,3 +132,17 @@ class DeleteHouseholdView(APIView):
 
         delete_household(household=household)
         return Response({"message": "Der Haushalt wurde erfolgreich aufgelöst."}, status=status.HTTP_200_OK)
+
+
+class ListHouseholdMembersView(APIView):
+    def get(self, request):
+        if not request.user.household:
+            return Response([])
+
+        members = Person.objects.filter(household=request.user.household).values(
+            'person_id',
+            'first_name',
+            'last_name'
+        )
+
+        return Response(list(members))

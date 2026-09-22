@@ -20,6 +20,7 @@ from .serializers import CostItemSerializer
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.db.models import Q
 from django.utils.dateparse import parse_date
+from drf_spectacular.types import OpenApiTypes
 
 # Create your views here.
 
@@ -67,13 +68,18 @@ class CreateCostItemView(APIView):
 
 
 class UpdateCostItemView(APIView):
-    @extend_schema(request=CostItemSerializer)
-    def patch(self, request, cost_item_id):
+    @extend_schema(
+            request=CostItemSerializer,
+            parameters=[OpenApiParameter(name='cost_item_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH)]
+        )
+
+    def patch(self, request,  cost_item_id):
+        household = request.user.household
 
         try:
             cost_item = CostItem.objects.get(
                 cost_item_id=cost_item_id,
-                household=request.user.household,
+                household=household,
                 valid_until__isnull=True
             )
         except CostItem.DoesNotExist:
@@ -91,11 +97,12 @@ class UpdateCostItemView(APIView):
             try:
                 updated_item = update_cost_item(
                     cost_item=cost_item,
+                    household=household,
                     update_data=validated_data,
                     shares_data=shares_data
                 )
             except Exception as e:
-                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
             return Response(
                 {
@@ -109,6 +116,10 @@ class UpdateCostItemView(APIView):
 
 
 class DeleteCostItemView(APIView):
+    @extend_schema(
+            parameters=[OpenApiParameter(name='cost_item_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH)]
+        )
+
     def delete(self, request, cost_item_id):
 
         try:
@@ -169,4 +180,26 @@ class ShowCostItemsView(APIView):
             ).order_by('name')
 
         serializer = CostItemSerializer(cost_items, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CostItemDetailView(APIView):
+    @extend_schema(
+        responses=CostItemSerializer,
+        parameters=[OpenApiParameter(name='cost_item_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH)]
+    )
+    def get(self, request, cost_item_id):
+        try:
+            cost_item = CostItem.objects.get(
+                cost_item_id=cost_item_id,
+                household=request.user.household,
+                valid_until__isnull=True
+            )
+        except CostItem.DoesNotExist:
+            return Response(
+                {"error": "Kostenposten nicht gefunden oder historisiert."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = CostItemSerializer(cost_item)
         return Response(serializer.data, status=status.HTTP_200_OK)

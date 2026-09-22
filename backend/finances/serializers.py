@@ -12,7 +12,7 @@ class CostShareSerializer(serializers.ModelSerializer):
 
 
 class CostItemSerializer(serializers.ModelSerializer):
-    shares = CostShareSerializer(many=True, write_only=True)
+    shares = CostShareSerializer(many=True)
 
     class Meta:
         model = CostItem

@@ -1,6 +1,7 @@
 from django.db import transaction
 from django.utils import timezone
 from .models import CostItem, CostShare
+from rest_framework.exceptions import ValidationError
 
 def create_cost_item(*, household, item_data: dict, shares_data: list) -> CostItem:
     with transaction.atomic():
@@ -11,6 +12,11 @@ def create_cost_item(*, household, item_data: dict, shares_data: list) -> CostIt
         )
 
         for share_data in shares_data:
+            person = share_data['person']
+
+            if person.household != household:
+                raise ValidationError(f"Nutzer {person.first_name} gehört nicht zu diesem Haushalt.")
+
             CostShare.objects.create(
                 cost_item=cost_item,
                 **share_data
@@ -19,21 +25,27 @@ def create_cost_item(*, household, item_data: dict, shares_data: list) -> CostIt
     return cost_item
 
 
-def update_cost_item(*, cost_item: CostItem, update_data: dict, shares_data: list = None) -> CostItem:
+def update_cost_item(*, cost_item: CostItem, household, update_data: dict, shares_data: list = None) -> CostItem:
     today = timezone.now().date()
     new_amount = update_data.get('amount')
 
+    needs_history = False
+    if new_amount is not None and new_amount != cost_item.amount:
+        needs_history = True
+    if shares_data is not None:
+        needs_history = True
+
     with transaction.atomic():
 
-        # Anlegen eines neuen Postens, wenn der bisherige Betrag aktualisiert wird
-        if new_amount is not None and new_amount != cost_item.amount:
+        if needs_history:
+            # Anlegen eines neuen Postens, wenn der bisherige Betrag oder die Verteilung aktualisiert wird
 
             cost_item.valid_until = today
             cost_item.save(update_fields=['valid_until'])
 
             new_item_data = {
                 'household': cost_item.household,
-                'history_group_id': cost_item.history_group_id, # Die Klammer um die Gruppe bleibt gleich
+                'history_group_id': cost_item.history_group_id,
                 'position_category': cost_item.position_category,
                 'name': cost_item.name,
                 'description': cost_item.description,
@@ -47,8 +59,12 @@ def update_cost_item(*, cost_item: CostItem, update_data: dict, shares_data: lis
             if shares_data is not None:
 
                 for share in shares_data:
-                    CostShare.objects.create(cost_item=new_item, **share)
+                    person = share['person']
 
+                    if person.household != household:
+                        raise ValidationError(f"Nutzer {person.first_name} gehört nicht zu diesem Haushalt.")
+
+                    CostShare.objects.create(cost_item=new_item, **share)
             else:
 
                 for old_share in cost_item.shares.all():
@@ -60,17 +76,11 @@ def update_cost_item(*, cost_item: CostItem, update_data: dict, shares_data: lis
 
             return new_item
 
-        # Update des bisherigen postens, wenn sich der Betrag nicht geändert hat
         else:
-
+            # Update des bisherigen postens, wenn sich der Betrag oder die Verteilung nicht geändert hat
             for attr, value in update_data.items():
                 setattr(cost_item, attr, value)
             cost_item.save()
-
-            if shares_data is not None:
-                cost_item.shares.all().delete()
-                for share in shares_data:
-                    CostShare.objects.create(cost_item=cost_item, **share)
 
             return cost_item
 
