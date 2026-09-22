@@ -16,6 +16,7 @@ import {ProfilePage} from "@/app/pages/profile-page.tsx";
 import {VerifyEmailPage} from "@/app/pages/verify-email-page.tsx";
 import {LoginCodePage} from "@/app/pages/login-code-page.tsx";
 import {ResetPasswordPage} from "@/app/pages/reset-password-page.tsx";
+import {HouseholdPage} from "@/app/pages/household-page.tsx";
 
 
 export const router = createBrowserRouter([
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
                   {path: 'jeremy', element: <JeremyPage/>},
                   {path: 'einstellungen', element: <SettingsPage/>},
                   {path: 'profil', element: <ProfilePage/>},
+                  {path: 'household', element: <HouseholdPage/>},
               ]
           }
       ]
