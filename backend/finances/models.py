@@ -73,7 +73,7 @@ class CostItem(models.Model):
 
     class Meta:
         constraints = [
-            models.CheckConstraint(check=~models.Q(end_date__lt=models.F('start_date')), name='costitem_valid_date_range')
+            models.CheckConstraint(condition=~models.Q(end_date__lt=models.F('start_date')), name='costitem_valid_date_range')
         ]
 
     def clean(self):
@@ -115,7 +115,7 @@ class CostItem(models.Model):
     @property
     def current_amount(self):
         today = date.today()
-        active_entry = self.price_history.filter(valid_from__lte=today).filter(
+        active_entry = ItemEntry.objects.filter(cost_item=self, valid_from__lte=today).filter(
             models.Q(valid_until__isnull=True) | models.Q(valid_until__gte=today)
         ).order_by('-valid_from').first()
         if active_entry:
@@ -137,7 +137,7 @@ class ItemEntry(models.Model):
 
     class Meta:
         constraints = [
-            models.CheckConstraint(check=~models.Q(valid_until__lt=models.F('valid_from')), name='itementry_valid_date_range')
+            models.CheckConstraint(condition=~models.Q(valid_until__lt=models.F('valid_from')), name='itementry_valid_date_range')
         ]
 
     def clean(self):
