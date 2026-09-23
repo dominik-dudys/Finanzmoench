@@ -2,6 +2,24 @@ from django.db import transaction
 from django.utils import timezone
 from .models import CostItem, CostShare
 from rest_framework.exceptions import ValidationError
+from datetime import date
+from django.shortcuts import get_object_or_404
+from django.db.models import Q
+
+
+def get_price_for_date(cost_item, target_date: date):
+    entry = (
+        cost_item.price_history
+        .filter(valid_from__lte=target_date)
+        .filter(Q(valid_until__isnull=True) | Q(valid_until__gte=target_date))
+        .order_by("-valid_from")
+        .first()
+    )
+
+    if not entry:
+        raise ValueError("Für das angegebene Datum ist kein gültiger Preis vorhanden.")
+
+    return entry.amount
 
 def create_cost_item(*, household, item_data: dict, shares_data: list) -> CostItem:
     with transaction.atomic():
