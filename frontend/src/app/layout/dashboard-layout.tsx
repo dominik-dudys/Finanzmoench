@@ -20,6 +20,9 @@ export function DashboardLayout() {
                             <a href="/dashboard">Dashboard</a>
                         </Button>
                         <Button variant="outline" className="text-gray-600 border-transparent h-10">
+                            <a href="/household">Haushalte</a>
+                        </Button>
+                        <Button variant="outline" className="text-gray-600 border-transparent h-10">
                             <a href="/vertrag">Verträge</a>
                         </Button>
                         <Button variant="outline" className="text-gray-600 border-transparent h-10">
