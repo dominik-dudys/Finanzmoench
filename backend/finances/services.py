@@ -25,8 +25,8 @@ def get_price_for_date(cost_item, target_date: date):
 def create_cost_item(*, household, item_data: dict, shares_data: list) -> CostItem:
 
     category = item_data.get('position_category')
-        if category and category.household != household:
-            raise ValidationError("Diese Kategorie gehört nicht zu diesem Haushalt.")
+    if category and category.household != household:
+        raise ValidationError("Diese Kategorie gehört nicht zu diesem Haushalt.")
 
     with transaction.atomic():
         cost_item = CostItem.objects.create(
@@ -52,8 +52,8 @@ def create_cost_item(*, household, item_data: dict, shares_data: list) -> CostIt
 def update_cost_item(*, cost_item: CostItem, household, update_data: dict, shares_data: list = None) -> CostItem:
 
     category = item_data.get('position_category')
-        if category and category.household != household:
-            raise ValidationError("Diese Kategorie gehört nicht zu diesem Haushalt.")
+    if category and category.household != household:
+        raise ValidationError("Diese Kategorie gehört nicht zu diesem Haushalt.")
 
     today = timezone.now().date()
     new_amount = update_data.get('amount')
@@ -123,7 +123,7 @@ def delete_cost_item(*, cost_item: CostItem) -> CostItem:
 
 def create_income(person, amount, valid_from, position_category=None):
     if position_category and position_category.household != person.household:
-            raise ValidationError("Diese Kategorie gehört nicht zu deinem Haushalt.")
+        raise ValidationError("Diese Kategorie gehört nicht zu deinem Haushalt.")
 
     return Income.objects.create(
         person=person,
@@ -136,40 +136,40 @@ def create_income(person, amount, valid_from, position_category=None):
 @transaction.atomic
 def update_income(income, update_data):
     category = update_data.get('position_category')
-        if category and category.household != income.person.household:
-            raise ValidationError("Diese Kategorie gehört nicht zu deinem Haushalt.")
+    if category and category.household != income.person.household:
+        raise ValidationError("Diese Kategorie gehört nicht zu deinem Haushalt.")
 
     new_amount = update_data.get('amount')
     update_data.pop('valid_from', None)
 
     needs_history = False
-        if new_amount is not None and Decimal(str(new_amount)) != income.amount:
-            needs_history = True
+    if new_amount is not None and Decimal(str(new_amount)) != income.amount:
+        needs_history = True
 
-        if 'position_category' in update_data and update_data['position_category'] != income.position_category:
-            needs_history = True
+    if 'position_category' in update_data and update_data['position_category'] != income.position_category:
+        needs_history = True
 
-        if needs_history:
-            today = date.today()
-            income.valid_until = today
-            income.save(update_fields=['valid_until'])
+    if needs_history:
+        today = date.today()
+        income.valid_until = today
+        income.save(update_fields=['valid_until'])
 
-            final_amount = new_amount if new_amount is not None else income.amount
-            final_category = update_data.get('position_category', income.position_category)
+        final_amount = new_amount if new_amount is not None else income.amount
+        final_category = update_data.get('position_category', income.position_category)
 
-            new_income = Income.objects.create(
-                history_group_id=income.history_group_id,
-                person=income.person,
-                amount=final_amount,
-                valid_from=today,
-                position_category=final_category
-            )
-            return new_income
+        new_income = Income.objects.create(
+            history_group_id=income.history_group_id,
+            person=income.person,
+            amount=final_amount,
+            valid_from=today,
+            position_category=final_category
+        )
+        return new_income
 
-        for attr, value in update_data.items():
-            setattr(income, attr, value)
-        income.save()
-        return income
+    for attr, value in update_data.items():
+        setattr(income, attr, value)
+    income.save()
+    return income
 
 
 def delete_income(income):
