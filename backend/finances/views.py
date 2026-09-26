@@ -14,9 +14,9 @@ from rest_framework.permissions import AllowAny
 from django.utils import timezone
 from django.db import transaction
 from decimal import Decimal
-from .models import CostItem, CostShare
-from .services import create_cost_item, update_cost_item, delete_cost_item
-from .serializers import CostItemSerializer
+from .models import CostItem, CostShare, Income
+from .services import create_cost_item, update_cost_item, delete_cost_item, create_income, update_income, delete_income
+from .serializers import CostItemSerializer, IncomeSerializer
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.db.models import Q
 from django.utils.dateparse import parse_date
@@ -167,12 +167,12 @@ class ShowCostItemsView(APIView):
 
             cost_items = CostItem.objects.filter(
                 household=request.user.household,
-                valid_from__date__lte=target_date
+                valid_from__lte=target_date  # __date entfernt
             ).filter(
-                Q(valid_until__isnull=True) | Q(valid_until__date__gt=target_date)
+                Q(valid_until__isnull=True) | Q(valid_until__gt=target_date) # __date entfernt
             ).order_by('name')
 
-        #Aneige der aktuell gültigen Kostenposten
+        #Anzeige der aktuell gültigen Kostenposten
         else:
             cost_items = CostItem.objects.filter(
                 household=request.user.household,
@@ -202,4 +202,131 @@ class CostItemDetailView(APIView):
             )
 
         serializer = CostItemSerializer(cost_item)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CreateIncomeView(APIView):
+    @extend_schema(request=IncomeSerializer)
+    def post(self, request):
+            serializer = IncomeSerializer(data=request.data)
+            if serializer.is_valid():
+
+                income = create_income(
+                    person=request.user,
+                    amount=serializer.validated_data['amount'],
+                    position_category=serializer.validated_data.get('position_category')
+                )
+                return Response(IncomeSerializer(income).data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdateIncomeView(APIView):
+    @extend_schema(
+        request=IncomeSerializer,
+        parameters=[OpenApiParameter(name='income_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH)]
+    )
+    def patch(self, request, income_id):
+        try:
+            income = Income.objects.get(
+                income_id=income_id,
+                person=request.user,
+                valid_until__isnull=True
+            )
+        except Income.DoesNotExist:
+            return Response(
+                {"error": "Einkommen nicht gefunden, bereits archiviert oder keine Berechtigung."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = IncomeSerializer(income, data=request.data, partial=True)
+        if serializer.is_valid():
+            updated_income = update_income(income, serializer.validated_data)
+            return Response(IncomeSerializer(updated_income).data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteIncomeView(APIView):
+    @extend_schema(
+        parameters=[OpenApiParameter(name='income_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH)]
+    )
+    def delete(self, request, income_id):
+        try:
+            income = Income.objects.get(
+                income_id=income_id,
+                person=request.user,
+                valid_until__isnull=True
+            )
+        except Income.DoesNotExist:
+            return Response(
+                {"error": "Einkommen nicht gefunden oder keine Berechtigung."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        delete_income(income)
+        return Response(
+            {"message": "Einkommen erfolgreich entfernt."},
+            status=status.HTTP_200_OK
+        )
+
+
+class ShowIncomesView(APIView):
+    @extend_schema(
+        responses=IncomeSerializer(many=True),
+        parameters=[
+            OpenApiParameter(name='date', description='Format: YYYY-MM-DD für historische Daten', required=False, type=OpenApiTypes.DATE)
+        ]
+    )
+    def get(self, request):
+        if not hasattr(request.user, 'household') or not request.user.household:
+            return Response([], status=status.HTTP_200_OK)
+
+        target_date_str = request.query_params.get('date')
+
+        incomes = Income.objects.filter(person__household=request.user.household)
+
+        # Anzeige historischer Daten
+        if target_date_str:
+            target_date = parse_date(target_date_str)
+            if not target_date:
+                return Response(
+                    {"error": "Ungültiges Datumsformat. Bitte YYYY-MM-DD nutzen."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            incomes = incomes.filter(
+                valid_from__lte=target_date
+            ).filter(
+                Q(valid_until__isnull=True) | Q(valid_until__gt=target_date)
+            )
+
+        # Anzeige aktueller Daten
+        else:
+            incomes = incomes.filter(valid_until__isnull=True)
+
+        incomes = incomes.order_by('person__first_name')
+
+        serializer = IncomeSerializer(incomes, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class IncomeDetailView(APIView):
+    @extend_schema(
+        responses=IncomeSerializer,
+        parameters=[OpenApiParameter(name='income_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH)]
+    )
+    def get(self, request, income_id):
+        try:
+            income = Income.objects.get(
+                income_id=income_id,
+                person__household=request.user.household,
+                valid_until__isnull=True
+            )
+        except Income.DoesNotExist:
+            return Response(
+                {"error": "Einkommen nicht gefunden oder archiviert."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = IncomeSerializer(income)
         return Response(serializer.data, status=status.HTTP_200_OK)
