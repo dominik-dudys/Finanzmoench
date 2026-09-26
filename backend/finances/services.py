@@ -1,10 +1,11 @@
 from django.db import transaction
 from django.utils import timezone
-from .models import CostItem, CostShare
+from .models import CostItem, CostShare, Income
 from rest_framework.exceptions import ValidationError
 from datetime import date
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from decimal import Decimal
 
 
 def get_price_for_date(cost_item, target_date: date):
@@ -22,6 +23,11 @@ def get_price_for_date(cost_item, target_date: date):
     return entry.amount
 
 def create_cost_item(*, household, item_data: dict, shares_data: list) -> CostItem:
+
+    category = item_data.get('position_category')
+        if category and category.household != household:
+            raise ValidationError("Diese Kategorie gehört nicht zu diesem Haushalt.")
+
     with transaction.atomic():
         cost_item = CostItem.objects.create(
             household=household,
@@ -44,11 +50,17 @@ def create_cost_item(*, household, item_data: dict, shares_data: list) -> CostIt
 
 
 def update_cost_item(*, cost_item: CostItem, household, update_data: dict, shares_data: list = None) -> CostItem:
+
+    category = item_data.get('position_category')
+        if category and category.household != household:
+            raise ValidationError("Diese Kategorie gehört nicht zu diesem Haushalt.")
+
     today = timezone.now().date()
     new_amount = update_data.get('amount')
+    update_data.pop('valid_from', None)
 
     needs_history = False
-    if new_amount is not None and new_amount != cost_item.amount:
+    if new_amount is not None and Decimal(str(new_amount)) != cost_item.amount:
         needs_history = True
     if shares_data is not None:
         needs_history = True
@@ -107,3 +119,60 @@ def delete_cost_item(*, cost_item: CostItem) -> CostItem:
     cost_item.valid_until = timezone.now().date()
     cost_item.save(update_fields=['valid_until'])
     return cost_item
+
+
+def create_income(person, amount, valid_from, position_category=None):
+    if position_category and position_category.household != person.household:
+            raise ValidationError("Diese Kategorie gehört nicht zu deinem Haushalt.")
+
+    return Income.objects.create(
+        person=person,
+        amount=amount,
+        valid_from=date.today(),
+        position_category=position_category
+    )
+
+
+@transaction.atomic
+def update_income(income, update_data):
+    category = update_data.get('position_category')
+        if category and category.household != income.person.household:
+            raise ValidationError("Diese Kategorie gehört nicht zu deinem Haushalt.")
+
+    new_amount = update_data.get('amount')
+    update_data.pop('valid_from', None)
+
+    needs_history = False
+        if new_amount is not None and Decimal(str(new_amount)) != income.amount:
+            needs_history = True
+
+        if 'position_category' in update_data and update_data['position_category'] != income.position_category:
+            needs_history = True
+
+        if needs_history:
+            today = date.today()
+            income.valid_until = today
+            income.save(update_fields=['valid_until'])
+
+            final_amount = new_amount if new_amount is not None else income.amount
+            final_category = update_data.get('position_category', income.position_category)
+
+            new_income = Income.objects.create(
+                history_group_id=income.history_group_id,
+                person=income.person,
+                amount=final_amount,
+                valid_from=today,
+                position_category=final_category
+            )
+            return new_income
+
+        for attr, value in update_data.items():
+            setattr(income, attr, value)
+        income.save()
+        return income
+
+
+def delete_income(income):
+    income.valid_until = date.today()
+    income.save()
+    return income
