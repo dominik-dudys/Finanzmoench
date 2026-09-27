@@ -47,9 +47,9 @@ class IncomeSerializer(serializers.ModelSerializer):
         fields = [
             "income_id",
             "person",
-            "position_category",
             "amount",
             "valid_from",
             "valid_until",
+            "position_category",
         ]
-        read_only_fields = ["income_id", "person"]
+        read_only_fields = ["income_id", "valid_until", "person", "valid_from"]
