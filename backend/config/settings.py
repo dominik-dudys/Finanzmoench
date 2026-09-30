@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'accounts',
     'households',
     'finances',
+    'feature_flags',
     "rest_framework",
     "corsheaders",
     "drf_spectacular",
@@ -179,6 +180,7 @@ ACCOUNT_ADAPTER = "accounts.adapter.AccountAdapter"
 ALLAUTH_USER_CODE_FORMAT = {"length": 6, "numeric": True, "dashed": False}
 
 MFA_SUPPORTED_TYPES = ['totp', 'recovery_codes']
+MFA_TOTP_ISSUER = "Finanzmönch"
 
 HEADLESS_ONLY = False
 

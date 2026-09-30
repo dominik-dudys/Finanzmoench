@@ -58,6 +58,8 @@ export function LoginForm({
         navigate("/dashboard", {replace: true});
       } else if (next.status === "pending_login_code") {
         navigate("/login/code");
+      } else if (next.status === "pending_2fa") {
+        navigate("/login/2fa");
       } else if (next.status === "pending_verify_email"){
         navigate("/register/verify");
       } else {
@@ -149,7 +151,7 @@ export function LoginForm({
                 </Button>
 
                 <Button variant="outline" type="button" onClick={() => {window.location.href = '/accounts/github/login/'}}>
-                  <img src="/github-svgrepo-com.svg" className="size-6"/>
+                  <img src="/github-svgrepo-com.svg" alt="" className="size-6"/>
                   <span className="sr-only">Login with GitHub</span>
                 </Button>
 

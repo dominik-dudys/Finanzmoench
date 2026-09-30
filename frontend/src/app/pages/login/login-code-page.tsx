@@ -29,8 +29,11 @@ export function LoginCodePage() {
         mutationFn: confirmLoginCode,
         onSuccess: async (res) => {
             await queryClient.invalidateQueries({queryKey: ["auth", "session"]});
-            if (toAuthState(res, false).status === "authenticated") {
+            const next = toAuthState(res, false)
+            if (next.status === "authenticated"){
                 navigate("/dashboard", {replace: true});
+            } else if (next.status === "pending_2fa"){
+                navigate("/login/2fa", {replace: true});
             } else {
                 setError("Anmeldung nicht möglich. Bitte versuche es später erneut.");
             }
@@ -63,6 +66,11 @@ export function LoginCodePage() {
     if (state.status === "pending_verify_email") {
         return <Navigate to="/register/verify" replace/>;
     }
+
+    if (state.status === "pending_2fa") {
+        return <Navigate to="/login/2fa" replace/>;
+    }
+
     if (state.status !== "pending_login_code") {
         return <Navigate to="/login" replace/>;
     }
