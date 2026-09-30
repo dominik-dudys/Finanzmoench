@@ -20,6 +20,7 @@ import {HouseholdPage} from "@/app/pages/household-page.tsx";
 import {ImpressumPage} from "@/app/pages/impressum-page.tsx";
 import {AdaptiveLayout} from "@/app/layout/adaptive-layout.tsx";
 import {DatenschutzPage} from "@/app/pages/datenschutz-page.tsx";
+import {LoginTwoFactorPage} from "@/app/pages/login/login-2fa-page.tsx";
 
 
 export const router = createBrowserRouter([
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
             {index: true, element: <HomePage/>},
             {path: 'login', element: <LoginPage/>},
             {path: 'login/code', element: <LoginCodePage/>},
+            {path: 'login/2fa', element: <LoginTwoFactorPage/>},
             {path: 'register', element: <RegisterPage/>},
             {path: 'register/verify', element: <VerifyEmailPage/>},
             {path: 'forgot-password', element: <ForgotPassword/>},

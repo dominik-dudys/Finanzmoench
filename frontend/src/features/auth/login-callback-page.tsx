@@ -24,7 +24,7 @@ export function LoginCallbackPage(){
             if (state.status === "authenticated"){
                 navigate("/dashboard", {replace: true})
             } else if (state.status === "pending_2fa"){
-                navigate("/login", {replace: true})
+                navigate("/login/2fa", {replace: true})
             } else {
                 setFailed(true);
             }
