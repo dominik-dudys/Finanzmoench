@@ -12,7 +12,7 @@ import {
 import { Input } from "@/ui-components/ui/input"
 import * as React from "react";
 import {z} from "zod";
-import {useLocation, useNavigate} from "react-router";
+import {Link, useLocation, useNavigate} from "react-router";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {useForm} from "react-hook-form";
@@ -169,8 +169,8 @@ export function LoginForm({
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+        Informationen zur Verarbeitung deiner Daten findest du in unserer{" "}
+        <Link to="/datenschutz">Datenschutzerklärung</Link>.
       </FieldDescription>
     </div>
   )

@@ -1,10 +1,11 @@
 import {Link, Outlet} from "react-router";
 import {Button} from "@/ui-components/ui/button.tsx";
 import {AvatarUserMenu} from "@/app/layout/avatar-user-menu.tsx";
+import {FooterComponent} from "@/shared/components/footer-component.tsx";
 
 export function DashboardLayout() {
     return (
-        <div className="min-h-screen">
+        <div className="flex min-h-screen flex-col">
             <header className="sticky top-0 z-50 border-b bg-background p-4">
                 <nav className="grid grid-cols-3 items-center">
                     {/*Linke Seite*/}
@@ -40,9 +41,11 @@ export function DashboardLayout() {
                     </div>
                 </nav>
             </header>
-            <main>
+            <main className="flex-1">
                 <Outlet/>
             </main>
+
+            <FooterComponent/>
         </div>
     )
 }

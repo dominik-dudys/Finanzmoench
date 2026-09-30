@@ -4,7 +4,7 @@ import {FooterComponent} from "@/shared/components/footer-component.tsx";
 
 export function MarketingLayout() {
     return (
-        <div className="min-h-screen">
+        <div className="flex min-h-screen flex-col">
             <header className="sticky top-0 z-50 border-b bg-background p-4">
                 <nav className="grid grid-cols-3 items-center">
                     {/*Linke Seite*/}
@@ -37,12 +37,12 @@ export function MarketingLayout() {
                     </div>
                 </nav>
             </header>
-            <main>
+            <main className="flex-1">
                 <Outlet/>
             </main>
-            <footer>
+
                 <FooterComponent/>
-            </footer>
+
         </div>
     )
 }
