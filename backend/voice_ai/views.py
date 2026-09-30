@@ -8,7 +8,10 @@ from urllib.parse import quote
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from feature_flags.services import is_flag_active
 
 # Create your views here.
 from google import genai
@@ -18,8 +21,13 @@ logger = logging.getLogger(__name__)
 
 @csrf_exempt
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def jeremy_tip(request):
+
+    if not is_flag_active("jeremy_ai", request.user):
+        return Response({"code": "jeremy_disabled"}, status=503)
+    if request.user.ai_consent_at is None:
+        return Response({"code": "ai_consent_required"}, status=403)
     try:
         logger.info("--- STARTE JEREMY API ---")
         user_question = request.data.get("question", "Wie investiere ich mein Geld?")

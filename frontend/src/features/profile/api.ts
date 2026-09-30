@@ -8,11 +8,13 @@ export interface Person {
     created_at: string;
     login_method: string[];
     has_password: boolean;
+    ai_consent_at: string | null;
 }
 
 export interface UpdatePersonPayload{
     first_name?: string;
     last_name?: string;
+    ai_consent?: boolean;
 }
 
 export async function getMe(): Promise<Person>{
