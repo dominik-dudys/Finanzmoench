@@ -28,7 +28,7 @@ export function DatenschutzPage(){
                     </Section>
 
                     <Section title="2. Hosting und Server-Logs">
-                        <p>Die Anwendung läuft auf einem Server bei [OHV, Frankreich (Server in Polen)]. Beim Aufruf werden
+                        <p>Die Anwendung läuft auf einem Server bei OHV, Frankreich (Server in Polen, Warschau). Beim Aufruf werden
                             technisch notwendige Daten (IP-Adresse, Zeitpunkt, angefragte Seite) verarbeitet,
                             um den Betrieb und die Sicherheit zu gewährleisten (Art. 6 Abs. 1 lit. f DSGVO).</p>
                     </Section>
@@ -72,9 +72,7 @@ export function DatenschutzPage(){
 
                     <Section title="9. Deine Rechte">
                         <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der
-                            Verarbeitung, Datenübertragbarkeit und Widerspruch. Außerdem kannst du dich bei
-                            einer Datenschutz-Aufsichtsbehörde beschweren, z. B. bei der Landesbeauftragten
-                            für den Datenschutz Niedersachsen.</p>
+                            Verarbeitung, Datenübertragbarkeit und Widerspruch. </p>
                     </Section>
                 </CardContent>
             </Card>
