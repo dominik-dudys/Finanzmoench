@@ -7,6 +7,7 @@ export interface Person {
     email: string;
     created_at: string;
     login_method: string[];
+    has_password: boolean;
 }
 
 export interface UpdatePersonPayload{
