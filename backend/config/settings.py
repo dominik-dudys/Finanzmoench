@@ -163,6 +163,9 @@ ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 # bei registrierung wird ein Code verschickt
 ACCOUNT_EMAIL_VERIFICATION_BY_CODE_ENABLED = True
 
+#Alter von Cookies
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 60 * 60 * 8
 
 #Bei login Code per mail bei Passwort Login
 ACCOUNT_LOGIN_BY_CODE_ENABLED = True
