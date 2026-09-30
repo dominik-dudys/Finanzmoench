@@ -11,6 +11,7 @@ import {
 } from "@/ui-components/ui/message-scroller";
 import {Input} from "@/ui-components/ui/input";
 import {Button} from "@/ui-components/ui/button";
+import {Badge} from "@/ui-components/ui/badge";
 import {useFlags} from "@/features/feature-flags/use-flags";
 import {useMe} from "@/features/profile/use-me.ts";
 import {useAskJeremy} from "@/features/jeremyai/use-jeremy";
@@ -52,6 +53,7 @@ export function JeremyPage() {
     const enabled = flags?.jeremy_ai ?? false;
     const consented = !!me?.ai_consent_at;
     const canChat = !loading && enabled && consented;
+    const satire = me?.jeremy_mode === "satire";
 
     const update = (id: string, patch: Partial<ChatMessage>) =>
         setMessages((m) => m.map((msg) => (msg.id === id ? {...msg, ...patch} : msg)));
@@ -89,6 +91,14 @@ export function JeremyPage() {
 
     return (
         <div className="mx-auto flex h-[calc(100svh-5rem)] max-w-2xl flex-col gap-3 p-4">
+            <div className="flex items-center justify-between">
+                <h1 className="text-lg font-semibold">JeremyAI</h1>
+                {consented && (
+                    <Badge variant={satire ? "destructive" : "secondary"}>
+                        {satire ? "Satire" : "Seriös"}
+                    </Badge>
+                )}
+            </div>
             {/* ---------- Verlauf ---------- */}
             <MessageScrollerProvider autoScroll defaultScrollPosition="last-anchor">
                 <MessageScroller className="flex-1 rounded-lg border">
@@ -168,7 +178,9 @@ export function JeremyPage() {
                 </Button>
             </form>
             <p className="text-center text-xs text-muted-foreground">
-                Jeremy ist eine Parodie – keine Finanzberatung.
+                {satire
+                    ? "Satire-Modus: nicht ernst gemeint – keine Finanzberatung."
+                    : "Allgemeine Tipps – keine Finanzberatung."}
             </p>
         </div>
     );

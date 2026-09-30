@@ -19,6 +19,7 @@ export function AiConsentCard({me}: {me: Person}) {
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
+                {/* ---------- Einwilligung ---------- */}
                 <div className="flex items-center justify-between gap-4">
                     <Label htmlFor="ai-consent">Ich willige in die Datenverarbeitung durch JeremyAI ein</Label>
                     <Switch
@@ -34,6 +35,25 @@ export function AiConsentCard({me}: {me: Person}) {
                         Du kannst die Einwilligung jederzeit widerrufen.
                     </p>
                 )}
+
+                {/* ---------- Satire-Modus ---------- */}
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex flex-col gap-1">
+                        <Label htmlFor="jeremy-satire">Satire-Modus</Label>
+                        <p className="text-sm text-muted-foreground">
+                            Übertriebene, nicht ernst gemeinte Antworten.
+                        </p>
+                    </div>
+                    <Switch
+                        id="jeremy-satire"
+                        checked={me.jeremy_mode === "satire"}
+                        disabled={!consented || updateMe.isPending}
+                        onCheckedChange={(checked) =>
+                            updateMe.mutate({jeremy_mode: checked ? "satire" : "serious"})
+                        }
+                    />
+                </div>
+
                 {updateMe.isError && (
                     <p className="text-sm text-destructive">Speichern fehlgeschlagen.</p>
                 )}

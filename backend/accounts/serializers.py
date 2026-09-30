@@ -14,6 +14,7 @@ class PersonSerializer(serializers.ModelSerializer):
         fields = [
             'person_id', 'first_name', 'last_name', 'email', 'created_at',
             'login_method', 'has_password', 'ai_consent_at', 'ai_consent',
+            'jeremy_mode'
         ]
         read_only_fields = [
             'person_id', 'email', 'created_at',
