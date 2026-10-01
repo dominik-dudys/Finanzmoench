@@ -14,9 +14,19 @@ from rest_framework.permissions import AllowAny
 from django.utils import timezone
 from django.db import transaction
 from decimal import Decimal
+from accounts.models import Person
 from .models import CostItem, CostShare, Income
-from .services import create_cost_item, update_cost_item, delete_cost_item, create_income, update_income, delete_income
-from .serializers import CostItemSerializer, IncomeSerializer
+from .services import (
+    create_cost_item,
+    update_cost_item,
+    delete_cost_item,
+    create_income,
+    update_income,
+    delete_income,
+    calculate_shares_for_mode,
+    bulk_update_cost_shares
+)
+from .serializers import CostItemSerializer, IncomeSerializer, GlobalSharesSerializer, CostShareSerializer
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.db.models import Q
 from django.utils.dateparse import parse_date
@@ -167,9 +177,9 @@ class ShowCostItemsView(APIView):
 
             cost_items = CostItem.objects.filter(
                 household=request.user.household,
-                valid_from__lte=target_date  # __date entfernt
+                valid_from__lte=target_date
             ).filter(
-                Q(valid_until__isnull=True) | Q(valid_until__gt=target_date) # __date entfernt
+                Q(valid_until__isnull=True) | Q(valid_until__gt=target_date)
             ).order_by('name')
 
         #Anzeige der aktuell gültigen Kostenposten
@@ -330,3 +340,39 @@ class IncomeDetailView(APIView):
 
         serializer = IncomeSerializer(income)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class GlobalSharesView(APIView):
+    @extend_schema(request=GlobalSharesSerializer)
+    def post(self, request):
+        household = request.user.household
+        if not household:
+            return Response({"error": "Du bist in keinem Haushalt."}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = GlobalSharesSerializer(data=request.data)
+
+        if serializer.is_valid():
+            validated_data = serializer.validated_data
+            split_mode = validated_data.get('split_mode')
+            shares_data = validated_data.get('shares')
+            cost_item_ids = validated_data.get('cost_item_ids', [])
+
+            exclude_category_ids = validated_data.get('exclude_income_category_ids', [])
+
+            try:
+                bulk_update_cost_shares(
+                    household=household,
+                    split_mode=split_mode,
+                    shares_data=shares_data,
+                    cost_item_ids=cost_item_ids,
+                    exclude_category_ids=exclude_category_ids
+                )
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response(
+                {"message": f"Shares ({split_mode}) erfolgreich aktualisiert."},
+                status=status.HTTP_200_OK
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
