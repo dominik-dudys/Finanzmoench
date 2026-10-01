@@ -12,7 +12,7 @@ import {
 import { Input } from "@/ui-components/ui/input"
 import * as React from "react";
 import {z} from "zod";
-import {useLocation, useNavigate} from "react-router";
+import {Link, useLocation, useNavigate} from "react-router";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {useForm} from "react-hook-form";
@@ -58,6 +58,8 @@ export function LoginForm({
         navigate("/dashboard", {replace: true});
       } else if (next.status === "pending_login_code") {
         navigate("/login/code");
+      } else if (next.status === "pending_2fa") {
+        navigate("/login/2fa");
       } else if (next.status === "pending_verify_email"){
         navigate("/register/verify");
       } else {
@@ -149,7 +151,7 @@ export function LoginForm({
                 </Button>
 
                 <Button variant="outline" type="button" onClick={() => {window.location.href = '/accounts/github/login/'}}>
-                  <img src="/github-svgrepo-com.svg" className="size-6"/>
+                  <img src="/github-svgrepo-com.svg" alt="" className="size-6"/>
                   <span className="sr-only">Login with GitHub</span>
                 </Button>
 
@@ -169,8 +171,8 @@ export function LoginForm({
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+        Informationen zur Verarbeitung deiner Daten findest du in unserer{" "}
+        <Link to="/datenschutz">Datenschutzerklärung</Link>.
       </FieldDescription>
     </div>
   )

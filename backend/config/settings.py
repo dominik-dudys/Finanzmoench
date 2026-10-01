@@ -46,6 +46,10 @@ CSRF_TRUSTED_ORIGINS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'unfold',
+    'unfold.contrib.filters',
+    'unfold.contrib.forms',
+    'unfold.contrib.inlines',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -70,6 +74,7 @@ INSTALLED_APPS = [
     'accounts',
     'households',
     'finances',
+    'feature_flags',
     "rest_framework",
     "corsheaders",
     "drf_spectacular",
@@ -94,7 +99,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -163,6 +168,9 @@ ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 # bei registrierung wird ein Code verschickt
 ACCOUNT_EMAIL_VERIFICATION_BY_CODE_ENABLED = True
 
+#Alter von Cookies
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 60 * 60 * 8
 
 #Bei login Code per mail bei Passwort Login
 ACCOUNT_LOGIN_BY_CODE_ENABLED = True
@@ -176,6 +184,7 @@ ACCOUNT_ADAPTER = "accounts.adapter.AccountAdapter"
 ALLAUTH_USER_CODE_FORMAT = {"length": 6, "numeric": True, "dashed": False}
 
 MFA_SUPPORTED_TYPES = ['totp', 'recovery_codes']
+MFA_TOTP_ISSUER = "Finanzmönch"
 
 HEADLESS_ONLY = False
 
@@ -347,3 +356,14 @@ LOGIN_REDIRECT_URL = os.environ.get(
     "LOGIN_REDIRECT_URL",
     "http://localhost:5173/auth/callback",
 )
+
+UNFOLD = {
+    "SITE_TITLE": "Finanzmönch Admin",
+    "SITE_HEADER": "Finanzmönch",
+    "SITE_SYMBOL": "savings",
+    "DASHBOARD_CALLBACK": "core.dashboard.dashboard_callback",
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+    },
+}

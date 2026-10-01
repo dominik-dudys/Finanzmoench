@@ -82,6 +82,8 @@ def update_cost_item(*, cost_item: CostItem, household, update_data: dict, share
                 'description': cost_item.description,
                 'interval': cost_item.interval,
                 'amount': cost_item.amount,
+                'start_date': cost_item.start_date,
+                'end_date': cost_item.end_date,
                 'valid_from': today,
             }
             new_item_data.update(update_data)

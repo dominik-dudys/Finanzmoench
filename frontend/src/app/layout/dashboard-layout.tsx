@@ -1,12 +1,21 @@
 import {Link, Outlet} from "react-router";
-import {Button} from "@/ui-components/ui/button.tsx";
+import {buttonVariants} from "@/ui-components/ui/button.tsx";
 import {AvatarUserMenu} from "@/app/layout/avatar-user-menu.tsx";
+import {FooterComponent} from "@/shared/components/footer-component.tsx";
+
+const NAV_ITEMS = [
+    {to: "/dashboard", label: "Dashboard"},
+    {to: "/household", label: "Haushalte"},
+    {to: "/vertrag", label: "Verträge"},
+    {to: "/kategorien", label: "Kategorien"},
+    {to: "/jeremy", label: "JeremyAI"},
+];
 
 export function DashboardLayout() {
     return (
-        <div className="min-h-screen">
+        <div className="flex min-h-screen flex-col">
             <header className="sticky top-0 z-50 border-b bg-background p-4">
-                <nav className="grid grid-cols-3 items-center">
+                <nav className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
                     {/*Linke Seite*/}
                     <div className="flex items-center">
                         <Link to="/dashboard">
@@ -16,33 +25,31 @@ export function DashboardLayout() {
 
                     {/*Mitte*/}
                     <div className="flex items-center justify-center gap-4">
-                        <Button variant="outline" className="text-gray-600 border-transparent h-10">
-                            <a href="/dashboard">Dashboard</a>
-                        </Button>
-                        <Button variant="outline" className="text-gray-600 border-transparent h-10">
-                            <a href="/household">Haushalte</a>
-                        </Button>
-                        <Button variant="outline" className="text-gray-600 border-transparent h-10">
-                            <a href="/vertrag">Verträge</a>
-                        </Button>
-                        <Button variant="outline" className="text-gray-600 border-transparent h-10">
-                            <a href="/kategorien">Kategorien</a>
-                        </Button>
-                        <Button variant="outline" className="text-gray-600 border-transparent h-10">
-                            <a href="/jeremy">JeremyAI</a>
-                        </Button>
+                        {NAV_ITEMS.map((item) => (
+                            <Link
+                                key={item.to}
+                                to={item.to}
+                                className={buttonVariants({
+                                    variant: "outline",
+                                    className: "h-10 border-transparent text-gray-600",
+                                })}
+                            >
+                                {item.label}
+                            </Link>
+                        ))}
                     </div>
 
                     {/*Rechte Seite*/}
                     <div className="flex items-center justify-end gap-4">
-                    <AvatarUserMenu/>
-
+                        <AvatarUserMenu/>
                     </div>
                 </nav>
             </header>
-            <main>
+            <main className="flex-1">
                 <Outlet/>
             </main>
+
+            <FooterComponent/>
         </div>
     )
 }

@@ -17,6 +17,10 @@ import {VerifyEmailPage} from "@/app/pages/verify-email-page.tsx";
 import {LoginCodePage} from "@/app/pages/login/login-code-page.tsx";
 import {ResetPasswordPage} from "@/app/pages/login/reset-password-page.tsx";
 import {HouseholdPage} from "@/app/pages/household-page.tsx";
+import {ImpressumPage} from "@/app/pages/impressum-page.tsx";
+import {AdaptiveLayout} from "@/app/layout/adaptive-layout.tsx";
+import {DatenschutzPage} from "@/app/pages/datenschutz-page.tsx";
+import {LoginTwoFactorPage} from "@/app/pages/login/login-2fa-page.tsx";
 
 
 export const router = createBrowserRouter([
@@ -27,11 +31,21 @@ export const router = createBrowserRouter([
             {index: true, element: <HomePage/>},
             {path: 'login', element: <LoginPage/>},
             {path: 'login/code', element: <LoginCodePage/>},
+            {path: 'login/2fa', element: <LoginTwoFactorPage/>},
             {path: 'register', element: <RegisterPage/>},
             {path: 'register/verify', element: <VerifyEmailPage/>},
             {path: 'forgot-password', element: <ForgotPassword/>},
-            {path: 'forgot-password/reset', element: <ResetPasswordPage/>}
+            {path: 'forgot-password/reset', element: <ResetPasswordPage/>},
+
         ],
+    },
+    {
+      element: <AdaptiveLayout/>,
+        children: [
+            {path: 'impressum', element: <ImpressumPage/>},
+            {path: 'datenschutz', element: <DatenschutzPage/>},
+        ]
+
     },
     {
       path: 'auth/callback',
@@ -50,6 +64,7 @@ export const router = createBrowserRouter([
                   {path: 'einstellungen', element: <SettingsPage/>},
                   {path: 'profil', element: <ProfilePage/>},
                   {path: 'household', element: <HouseholdPage/>},
+
               ]
           }
       ]
