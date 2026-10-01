@@ -6,6 +6,7 @@ import {
 
 const KEY = ["categories"];
 
+/** Alle Kategorien des Haushalts (Ausgaben + Einkommen) – gefiltert wird im Frontend */
 export function useCategories() {
     return useQuery({
         queryKey: KEY,
@@ -13,26 +14,35 @@ export function useCategories() {
     });
 }
 
-export function useCreateCategory() {
+/** Nach jeder Änderung Kategorien neu laden (und Verträge, falls die Seite schon existiert) */
+function useInvalidate() {
     const qc = useQueryClient();
+    return () => {
+        qc.invalidateQueries({queryKey: KEY});
+        qc.invalidateQueries({queryKey: ["contracts"]});
+    };
+}
+
+export function useCreateCategory() {
+    const invalidate = useInvalidate();
     return useMutation({
         mutationFn: (payload: CategoryPayload) => createCategory(payload),
-        onSuccess: () => qc.invalidateQueries({queryKey: KEY}),
+        onSuccess: invalidate,
     });
 }
 
 export function useUpdateCategory() {
-    const qc = useQueryClient();
+    const invalidate = useInvalidate();
     return useMutation({
         mutationFn: ({id, payload}: {id: string; payload: CategoryPayload}) => updateCategory(id, payload),
-        onSuccess: () => qc.invalidateQueries({queryKey: KEY}),
+        onSuccess: invalidate,
     });
 }
 
 export function useDeleteCategory() {
-    const qc = useQueryClient();
+    const invalidate = useInvalidate();
     return useMutation({
-        mutationFn: (id: string) => deleteCategory(id),
-        onSuccess: () => qc.invalidateQueries({queryKey: KEY}),
+        mutationFn: ({id, fallbackId}: {id: string; fallbackId?: string}) => deleteCategory(id, fallbackId),
+        onSuccess: invalidate,
     });
 }

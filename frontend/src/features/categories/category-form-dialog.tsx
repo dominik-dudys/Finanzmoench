@@ -9,7 +9,7 @@ import {
 import {Field, FieldError, FieldGroup, FieldLabel} from "@/ui-components/ui/field";
 import {Input} from "@/ui-components/ui/input";
 import {Button} from "@/ui-components/ui/button";
-import type {Category, CategoryFieldErrors} from "./api";
+import type {Category, CategoryErrors, CategoryType} from "./api";
 import {useCreateCategory, useUpdateCategory} from "./use-categories";
 
 const PRESET_COLORS = [
@@ -18,26 +18,34 @@ const PRESET_COLORS = [
 ];
 const DEFAULT_COLOR = "#3B82F6";
 
+const TYPE_LABELS: Record<CategoryType, string> = {
+    cost: "Ausgabe",
+    income: "Einkommen",
+};
+
 const schema = z.object({
     name: z.string().trim().min(1, "Bitte gib einen Namen ein").max(100, "Maximal 100 Zeichen"),
     color_code: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Ungültige Farbe").nullable(),
+    type: z.enum(["cost", "income"]),
 });
 type Values = z.infer<typeof schema>;
 
 interface Props {
     open: boolean;
     onClose: () => void;
-    category?: Category;   // gesetzt = Bearbeiten, leer = Anlegen
+    category?: Category;          // gesetzt = Bearbeiten, leer = Anlegen
+    defaultType: CategoryType;    // vorausgewählter Typ beim Anlegen (aktueller Tab)
 }
 
-export function CategoryFormDialog({open, onClose, category}: Props) {
+export function CategoryFormDialog({open, onClose, category, defaultType}: Props) {
     const create = useCreateCategory();
     const update = useUpdateCategory();
     const pending = create.isPending || update.isPending;
+    const isEdit = !!category;
 
     const {register, control, handleSubmit, reset, setError, formState: {errors}} = useForm<Values>({
         resolver: zodResolver(schema),
-        defaultValues: {name: "", color_code: DEFAULT_COLOR},
+        defaultValues: {name: "", color_code: DEFAULT_COLOR, type: defaultType},
     });
 
     // Beim Öffnen Formular mit den passenden Werten füllen
@@ -46,15 +54,24 @@ export function CategoryFormDialog({open, onClose, category}: Props) {
             reset({
                 name: category?.name ?? "",
                 color_code: category ? category.color_code : DEFAULT_COLOR,
+                type: category?.type ?? defaultType,
             });
         }
-    }, [open, category, reset]);
+    }, [open, category, defaultType, reset]);
 
     const onError = (err: unknown) => {
-        const fieldErrors = (err ?? {}) as CategoryFieldErrors;
-        if (fieldErrors.name?.[0]) setError("name", {message: fieldErrors.name[0]});
-        if (fieldErrors.color_code?.[0]) setError("color_code", {message: fieldErrors.color_code[0]});
-        if (!fieldErrors.name && !fieldErrors.color_code) {
+        const e = (err ?? {}) as CategoryErrors;
+        if (e.color_code?.[0]) setError("color_code", {message: e.color_code[0]});
+        if (e.name?.[0]) setError("name", {message: e.name[0]});
+
+        if (e.error) {
+            // Doppelter Name kommt als Text vom Service → beim Namen anzeigen
+            if (e.error.includes("existiert bereits")) {
+                setError("name", {message: "Eine Kategorie mit diesem Namen gibt es bereits."});
+            } else {
+                setError("root", {message: e.error});
+            }
+        } else if (!e.color_code && !e.name) {
             setError("root", {message: "Speichern fehlgeschlagen. Bitte versuch es nochmal."});
         }
     };
@@ -62,7 +79,11 @@ export function CategoryFormDialog({open, onClose, category}: Props) {
     const onSubmit = handleSubmit((values) => {
         const options = {onSuccess: onClose, onError};
         if (category) {
-            update.mutate({id: category.position_id, payload: values}, options);
+            // Typ wird beim Bearbeiten bewusst nicht mitgeschickt
+            update.mutate(
+                {id: category.position_id, payload: {name: values.name, color_code: values.color_code}},
+                options,
+            );
         } else {
             create.mutate(values, options);
         }
@@ -73,10 +94,39 @@ export function CategoryFormDialog({open, onClose, category}: Props) {
             <DialogContent>
                 <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
                     <DialogHeader>
-                        <DialogTitle>{category ? "Kategorie bearbeiten" : "Neue Kategorie"}</DialogTitle>
+                        <DialogTitle>{isEdit ? "Kategorie bearbeiten" : "Neue Kategorie"}</DialogTitle>
                     </DialogHeader>
 
                     <FieldGroup>
+                        {/* ---------- Typ ---------- */}
+                        <Field>
+                            <FieldLabel>Typ</FieldLabel>
+                            {isEdit ? (
+                                <p className="text-sm text-muted-foreground">{TYPE_LABELS[category.type]}</p>
+                            ) : (
+                                <Controller
+                                    name="type"
+                                    control={control}
+                                    render={({field}) => (
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {(Object.keys(TYPE_LABELS) as CategoryType[]).map((t) => (
+                                                <Button
+                                                    key={t}
+                                                    type="button"
+                                                    variant={field.value === t ? "default" : "outline"}
+                                                    aria-pressed={field.value === t}
+                                                    onClick={() => field.onChange(t)}
+                                                >
+                                                    {TYPE_LABELS[t]}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    )}
+                                />
+                            )}
+                        </Field>
+
+                        {/* ---------- Name ---------- */}
                         <Field>
                             <FieldLabel htmlFor="category-name">Name</FieldLabel>
                             <Input
@@ -89,6 +139,7 @@ export function CategoryFormDialog({open, onClose, category}: Props) {
                             <FieldError errors={[errors.name]}/>
                         </Field>
 
+                        {/* ---------- Farbe ---------- */}
                         <Field>
                             <FieldLabel>Farbe</FieldLabel>
                             <Controller
