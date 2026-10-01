@@ -1,8 +1,9 @@
 import re
 from rest_framework import serializers
-from .models import Household
+from .models import Household, PositionCategory
 
 VALID_CURRENCIES = {'EUR', 'USD'}
+HEX_COLOR = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
 class HouseholdSerializer(serializers.ModelSerializer):
     class Meta:
@@ -37,3 +38,34 @@ class HouseholdSerializer(serializers.ModelSerializer):
         if len(clean_city) < 2:
             raise serializers.ValidationError("Der Stadtname ist zu kurz.")
         return clean_city.title()
+
+class PositionCategorySerializer(serializers.ModelSerializer):
+    contract_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PositionCategory
+        fields = ["position_id", "name", "color_code", "contract_count"]
+        read_only_fields = ["position_id"]
+
+    def get_contract_count(self, obj):
+        # nur in der Liste annotiert (Anzahl aktiver Verträge), sonst None
+        return getattr(obj, "contract_count", None)
+
+    def validate_name(self, value):
+        name = value.strip()
+        if not name:
+            raise serializers.ValidationError("Der Name darf nicht leer sein.")
+
+        qs = PositionCategory.objects.filter(household=self.context["household"], name__iexact=name)
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError("Eine Kategorie mit diesem Namen gibt es bereits.")
+        return name
+
+    def validate_color_code(self, value):
+        if value in (None, ""):
+            return None
+        if not HEX_COLOR.match(value):
+            raise serializers.ValidationError("Die Farbe muss im Format #RRGGBB angegeben werden.")
+        return value.upper()
