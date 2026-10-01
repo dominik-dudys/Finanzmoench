@@ -4,11 +4,21 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
-from .models import Household
-from .serializers import HouseholdSerializer
+from .models import Household, PositionCategory
+from .serializers import HouseholdSerializer, PositionCategorySerializer
 from accounts.models import Person
-from .services import create_household_for_user, join_existing_household, update_household, leave_household, delete_household
-from drf_spectacular.utils import extend_schema, inline_serializer
+from .services import (
+    create_household_for_user,
+    join_existing_household,
+    update_household,
+    leave_household,
+    delete_household,
+    create_category,
+    update_category,
+    delete_category_safe
+)
+from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 
 
 # Create your views here.
@@ -148,3 +158,104 @@ class ListHouseholdMembersView(APIView):
         )
 
         return Response(list(members))
+
+
+class CreateCategoryView(APIView):
+    @extend_schema(request=PositionCategorySerializer)
+    def post(self, request):
+        household = request.user.household
+        if not household:
+            return Response({"error": "Kein Haushalt gefunden."}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = PositionCategorySerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                cat = create_category(household, serializer.validated_data)
+                return Response(PositionCategorySerializer(cat).data, status=status.HTTP_201_CREATED)
+            except ValidationError as e:
+                return Response({"error": getattr(e, 'message', str(e))}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ShowCategoriesView(APIView):
+    @extend_schema(
+        responses=PositionCategorySerializer(many=True),
+        parameters=[
+            OpenApiParameter(name='type', description='Filter: "income" oder "cost"', required=False, type=str)
+        ]
+    )
+    def get(self, request):
+        household = request.user.household
+        if not household:
+            return Response([], status=status.HTTP_200_OK)
+
+        categories = PositionCategory.objects.filter(household=household).order_by('name')
+
+        category_type = request.query_params.get('type')
+        if category_type in ['income', 'cost']:
+            categories = categories.filter(type=category_type)
+
+        return Response(PositionCategorySerializer(categories, many=True).data, status=status.HTTP_200_OK)
+
+
+class CategoryDetailView(APIView):
+    @extend_schema(responses=PositionCategorySerializer)
+    def get(self, request, position_id):
+        try:
+            category = PositionCategory.objects.get(position_id=position_id, household=request.user.household)
+        except PositionCategory.DoesNotExist:
+            return Response({"error": "Kategorie nicht gefunden."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = PositionCategorySerializer(category)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UpdateCategoryView(APIView):
+    @extend_schema(
+        request=PositionCategorySerializer,
+        parameters=[OpenApiParameter(name='position_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH)]
+    )
+    def patch(self, request, position_id):
+        try:
+            category = PositionCategory.objects.get(position_id=position_id, household=request.user.household)
+        except PositionCategory.DoesNotExist:
+            return Response({"error": "Kategorie nicht gefunden."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = PositionCategorySerializer(category, data=request.data, partial=True)
+        if serializer.is_valid():
+            try:
+                updated_cat = update_category(category, serializer.validated_data)
+                return Response(PositionCategorySerializer(updated_cat).data, status=status.HTTP_200_OK)
+            except ValidationError as e:
+                return Response({"error": getattr(e, 'message', str(e))}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteCategoryView(APIView):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(name='position_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH),
+            OpenApiParameter(name='fallback_category_id', type=OpenApiTypes.UUID, location=OpenApiParameter.QUERY, required=False, description="UUID der Ersatzkategorie")
+        ]
+    )
+    def delete(self, request, position_id):
+        try:
+            category = PositionCategory.objects.get(position_id=position_id, household=request.user.household)
+        except PositionCategory.DoesNotExist:
+            return Response({"error": "Kategorie nicht gefunden."}, status=status.HTTP_404_NOT_FOUND)
+
+        fallback_id = request.query_params.get('fallback_category_id')
+        fallback = None
+
+        if fallback_id:
+            try:
+                fallback = PositionCategory.objects.get(position_id=fallback_id, household=request.user.household)
+            except PositionCategory.DoesNotExist:
+                return Response({"error": "Ersatzkategorie nicht gefunden."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            delete_category_safe(category, fallback)
+            return Response({"message": "Kategorie erfolgreich gelöscht."}, status=status.HTTP_200_OK)
+        except ValidationError as e:
+            return Response({"error": getattr(e, 'message', str(e))}, status=status.HTTP_400_BAD_REQUEST)

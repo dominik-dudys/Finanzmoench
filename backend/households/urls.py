@@ -6,7 +6,12 @@ from .views import (
     UpdateHouseholdView,
     LeaveHouseholdView,
     DeleteHouseholdView,
-    ListHouseholdMembersView
+    ListHouseholdMembersView,
+    ShowCategoriesView,
+    CreateCategoryView,
+    CategoryDetailView,
+    UpdateCategoryView,
+    DeleteCategoryView
 )
 
 urlpatterns = [
@@ -17,4 +22,9 @@ urlpatterns = [
     path('leave/', LeaveHouseholdView.as_view(), name='leave-household'),
     path('delete/', DeleteHouseholdView.as_view(), name='delete-household'),
     path('householdmembers/', ListHouseholdMembersView.as_view(), name='household-members'),
+    path('category-create/', CreateCategoryView.as_view(), name='category-create'),
+    path('category-update/<uuid:position_id>/', UpdateCategoryView.as_view(), name='category-update'),
+    path('category-delete/<uuid:position_id>/', DeleteCategoryView.as_view(), name='category-delete'),
+    path('categories-show/', ShowCategoriesView.as_view(), name='show-categories'),
+    path('category-detail/<uuid:position_id>/', CategoryDetailView.as_view(), name='category-detail'),
 ]

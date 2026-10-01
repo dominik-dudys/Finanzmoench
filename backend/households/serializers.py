@@ -1,6 +1,6 @@
 import re
 from rest_framework import serializers
-from .models import Household
+from .models import Household, PositionCategory
 
 VALID_CURRENCIES = {'EUR', 'USD'}
 
@@ -37,3 +37,15 @@ class HouseholdSerializer(serializers.ModelSerializer):
         if len(clean_city) < 2:
             raise serializers.ValidationError("Der Stadtname ist zu kurz.")
         return clean_city.title()
+
+
+class PositionCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PositionCategory
+        fields = ['position_id', 'name', 'color_code', 'type', 'is_standard']
+        read_only_fields = ['position_id', 'is_standard']
+
+    def validate_color_code(self, value):
+        if value and not re.match(r'^#[0-9A-Fa-f]{6}$', value):
+            raise serializers.ValidationError("Farbcode muss im Format #RRGGBB sein.")
+        return value
