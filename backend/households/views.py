@@ -4,6 +4,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
+from django.db.models import Count, Q
+from .models import Household, PositionCategory
+from .serializers import HouseholdSerializer, PositionCategorySerializer
 from .models import Household
 from .serializers import HouseholdSerializer
 from accounts.models import Person
@@ -148,3 +151,60 @@ class ListHouseholdMembersView(APIView):
         )
 
         return Response(list(members))
+
+class CategoryListCreateView(APIView):
+    @extend_schema(responses=PositionCategorySerializer(many=True))
+    def get(self, request):
+        household = request.user.household
+        if not household:
+            return Response([])
+
+        categories = (
+            household.position_categories
+            .annotate(contract_count=Count("costitem", filter=Q(costitem__valid_until__isnull=True)))
+            .order_by("name")
+        )
+        return Response(PositionCategorySerializer(categories, many=True).data)
+
+    @extend_schema(request=PositionCategorySerializer, responses=PositionCategorySerializer)
+    def post(self, request):
+        household = request.user.household
+        if not household:
+            return Response({"error": "Du bist in keinem Haushalt."}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = PositionCategorySerializer(data=request.data, context={"household": household})
+        if serializer.is_valid():
+            category = serializer.save(household=household)
+            return Response(PositionCategorySerializer(category).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CategoryDetailView(APIView):
+    def _get_category(self, request, position_id):
+        household = request.user.household
+        if not household:
+            return None
+        return PositionCategory.objects.filter(household=household, position_id=position_id).first()
+
+    @extend_schema(request=PositionCategorySerializer, responses=PositionCategorySerializer)
+    def patch(self, request, position_id):
+        category = self._get_category(request, position_id)
+        if not category:
+            return Response({"error": "Kategorie nicht gefunden."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = PositionCategorySerializer(
+            category, data=request.data, partial=True, context={"household": category.household}
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, position_id):
+        category = self._get_category(request, position_id)
+        if not category:
+            return Response({"error": "Kategorie nicht gefunden."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Verträge/Einkommen bleiben erhalten, ihre Kategorie wird leer (on_delete=SET_NULL)
+        category.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
