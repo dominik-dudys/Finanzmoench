@@ -51,7 +51,7 @@ def create_cost_item(*, household, item_data: dict, shares_data: list) -> CostIt
 
 def update_cost_item(*, cost_item: CostItem, household, update_data: dict, shares_data: list = None) -> CostItem:
 
-    category = item_data.get('position_category')
+    category = update_data.get('position_category')
     if category and category.household != household:
         raise ValidationError("Diese Kategorie gehört nicht zu diesem Haushalt.")
 
@@ -81,6 +81,8 @@ def update_cost_item(*, cost_item: CostItem, household, update_data: dict, share
                 'description': cost_item.description,
                 'interval': cost_item.interval,
                 'amount': cost_item.amount,
+                'start_date': cost_item.start_date,
+                'end_date': cost_item.end_date,
                 'valid_from': today,
             }
             new_item_data.update(update_data)
@@ -121,7 +123,7 @@ def delete_cost_item(*, cost_item: CostItem) -> CostItem:
     return cost_item
 
 
-def create_income(person, amount, valid_from, position_category=None):
+def create_income(person, amount, position_category=None):
     if position_category and position_category.household != person.household:
         raise ValidationError("Diese Kategorie gehört nicht zu deinem Haushalt.")
 
