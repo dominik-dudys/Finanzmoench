@@ -1,7 +1,6 @@
 import {useMe} from "@/features/profile/use-me.ts";
 import {ChangePasswordCard} from "@/features/security/change-password-card";
 import {LinkedAccountsCard} from "@/features/security/linked-accounts-card";
-import {LanguageCard} from "@/features/preferences/language-card.tsx";
 import {TwoFactorCard} from "@/features/security/two-factor-card.tsx";
 import {useLocation} from "react-router";
 import {useEffect} from "react";
@@ -27,9 +26,6 @@ export function SettingsPage() {
 
             <h2 className="text-lg font-semibold">JeremyAI</h2>
             <AiConsentCard me={me}/>
-
-            <h2 className="text-lg font-semibold">Sprache & Region</h2>
-            <LanguageCard />
         </div>
     );
 }
