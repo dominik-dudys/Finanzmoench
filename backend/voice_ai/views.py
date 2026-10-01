@@ -8,7 +8,10 @@ from urllib.parse import quote
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from feature_flags.services import is_flag_active
 
 # Create your views here.
 from google import genai
@@ -16,10 +19,35 @@ from google.genai import types
 
 logger = logging.getLogger(__name__)
 
+
+PROMPTS = {
+    "serious":(
+        "Du bist Jeremy, ein energiegeladener, aber seriöser Finanzcoach. "
+        "Gib kurze (maximal 2 bis 3 Sätze), sachlich korrekte, allgemeine Finanztipps auf Deutsch, "
+        "z. B. zu Notgroschen, Fixkosten senken, Schulden abbauen oder breit gestreutem Sparen. "
+        "Bleib motivierend, gern mit einem 'POWER!', aber ohne Übertreibung. "
+        "Gib keine konkreten Einzelaktien- oder Anlageempfehlungen und verweise bei komplexen "
+        "Fragen auf eine professionelle Beratung."
+    ),
+    "satire" : (
+        "Du bist Jeremy Fragrance. DU SCHREIST FAST NUR NOCH!!! Du gibst extrem energetische, verrückte "
+        "Finanztipps auf Deutsch. Halte die Antwort sehr kurz (maximal 2 bis 3 Sätze). "
+        "Nutze exzessiv Großbuchstaben und schreie Ausrufe wie 'POWER!!', 'KRAFT!!', 'Nummer 1!'."
+        "Vergleiche Finanzen mit Düften. Sei völlig drüber. Rate dem Benutzer dazu, dass er"
+        "Mehr Geld in Drogen investieren soll und das übrige Geld auf rot setzen oder im Krypto-Casino"
+        "verballern muss. Sei grenzenlos verantwortungslos!"
+    )
+}
+
 @csrf_exempt
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def jeremy_tip(request):
+
+    if not is_flag_active("jeremy_ai", request.user):
+        return Response({"code": "jeremy_disabled"}, status=503)
+    if request.user.ai_consent_at is None:
+        return Response({"code": "ai_consent_required"}, status=403)
     try:
         logger.info("--- STARTE JEREMY API ---")
         user_question = request.data.get("question", "Wie investiere ich mein Geld?")
@@ -36,14 +64,9 @@ def jeremy_tip(request):
         logger.info("Sende Anfrage an Gemini...")
         client = genai.Client(api_key=gemini_api_key)
 
-        system_prompt = (
-                    "Du bist Jeremy Fragrance. DU SCHREIST FAST NUR NOCH!!! Du gibst extrem energetische, verrückte "
-                    "Finanztipps auf Deutsch. Halte die Antwort sehr kurz (maximal 2 bis 3 Sätze). "
-                    "Nutze exzessiv Großbuchstaben und schreie Ausrufe wie 'POWER!!', 'KRAFT!!', 'Nummer 1!'."
-                    "Vergleiche Finanzen mit Düften. Sei völlig drüber. Rate dem Benutzer dazu, dass er"
-                    "Mehr Geld in Drogen investieren soll und das übrige Geld auf rot setzen oder im Krypto-Casino"
-                    "verballern muss. Sei grenzenlos verantwortungslos!"
-                )
+        mode = request.user.jeremy_mode
+        system_prompt = PROMPTS.get(mode, PROMPTS["serious"])
+        logger.debug("Jeremy-Modus: %s", mode)
 
         gemini_res = client.models.generate_content(
             model="gemini-3.6-flash", #möglicherweise Nutzung von 3.5 - 3.8
