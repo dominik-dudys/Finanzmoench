@@ -20,9 +20,7 @@ class Income(models.Model):
     person = models.ForeignKey('accounts.Person', on_delete=models.CASCADE)
     position_category = models.ForeignKey(
         'households.PositionCategory',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.PROTECT,
     )
 
     amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -51,9 +49,7 @@ class CostItem(models.Model):
     household = models.ForeignKey('households.Household', on_delete=models.CASCADE)
     position_category = models.ForeignKey(
         'households.PositionCategory',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.PROTECT,
     )
 
     name = models.CharField(max_length=200)

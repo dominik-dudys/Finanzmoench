@@ -12,6 +12,7 @@ from .views import (
     DeleteIncomeView,
     ShowIncomesView,
     IncomeDetailView,
+    GlobalSharesView
 )
 
 urlpatterns = [
@@ -26,4 +27,5 @@ urlpatterns = [
     path('income-delete/<uuid:income_id>/', DeleteIncomeView.as_view(), name='income-delete'),
     path('incomes-show/', ShowIncomesView.as_view(), name='show-incomes'),
     path('income-detail/<uuid:income_id>/', IncomeDetailView.as_view(), name='income-detail'),
+    path('global-shares/', GlobalSharesView.as_view(), name='global-shares'),
 ]
