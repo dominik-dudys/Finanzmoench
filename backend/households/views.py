@@ -7,8 +7,6 @@ from django.core.exceptions import ValidationError
 from django.db.models import Count, Q
 from .models import Household, PositionCategory
 from .serializers import HouseholdSerializer, PositionCategorySerializer
-from .models import Household
-from .serializers import HouseholdSerializer
 from accounts.models import Person
 from .services import create_household_for_user, join_existing_household, update_household, leave_household, delete_household
 from drf_spectacular.utils import extend_schema, inline_serializer
