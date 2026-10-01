@@ -27,6 +27,7 @@ type ChatMessage = {
 const ERROR_TEXT: Record<string, string> = {
     ai_consent_required: "Du hast der Nutzung von Jeremy nicht zugestimmt.",
     jeremy_disabled: "Jeremy ist gerade nicht verfügbar.",
+    ai_busy: "Jeremy ist gerade überlastet. Versuch es in ein paar Sekunden nochmal.",
 };
 
 function errorCode(err: unknown): string {
