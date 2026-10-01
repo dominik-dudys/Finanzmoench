@@ -4,12 +4,14 @@ import sys
 import logging
 import traceback
 import requests
+import time
 from urllib.parse import quote
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from google.genai import errors as genai_errors
 
 from feature_flags.services import is_flag_active
 
@@ -38,6 +40,19 @@ PROMPTS = {
         "verballern muss. Sei grenzenlos verantwortungslos!"
     )
 }
+
+def generate_with_retry(client, *, model, contents, config, attempts=3):
+    """Wiederholt bei Überlastung (503) bzw. Rate Limit (429) mit kurzer Pause."""
+    for attempt in range(1, attempts):
+        try:
+            return client.models.generate_content(model=model, contents=contents, config=config)
+        except genai_errors.APIError as e:
+            if e.code not in (429, 503):
+                raise
+            logger.warning("Gemini %s - Versuch %s/%s, neuer Versuch...", e.code, attempt, attempts)
+            time.sleep(attempt)
+    return client.models.generate_content(model=model, contents=contents, config=config)
+
 
 @csrf_exempt
 @api_view(["POST"])
@@ -68,7 +83,8 @@ def jeremy_tip(request):
         system_prompt = PROMPTS.get(mode, PROMPTS["serious"])
         logger.debug("Jeremy-Modus: %s", mode)
 
-        gemini_res = client.models.generate_content(
+        gemini_res = generate_with_retry(
+            client,
             model="gemini-3.6-flash", #möglicherweise Nutzung von 3.5 - 3.8
             contents=f"Frage: {user_question}",
             config=types.GenerateContentConfig(
@@ -108,6 +124,12 @@ def jeremy_tip(request):
 
         return response
 
+    except genai_errors.APIError as e:
+        logger.error("Gemini-Fehler [%s]: %s", e.code, e)
+        if e.code in (429, 503):
+            return Response({"code": "ai_busy"}, status=503)
+        return Response({"code": "ai_error"}, status=502)
+
     except Exception as e:
         logger.critical("Kritischer Fehler in der jeremy_tip View: %s", str(e), exc_info=True)
-        return HttpResponse(f"Server Fehler: {str(e)}", status=500)
+        return Response({"code": "server_error"}, status=500)
