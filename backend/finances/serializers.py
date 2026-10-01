@@ -25,9 +25,13 @@ class CostItemSerializer(serializers.ModelSerializer):
             "amount",
             "description",
             "interval",
+            "start_date",
+            "end_date",
+            "valid_from",
+            "valid_until",
             "shares",
         ]
-        read_only_fields = ["cost_item_id", "history_group_id", "household"]
+        read_only_fields = ["cost_item_id", "history_group_id", "household", "valid_from", "valid_until"]
 
     def validate_shares(self, value):
             if not value:
@@ -39,6 +43,15 @@ class CostItemSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(f"Die Aufteilung muss exakt 100% ergeben. Aktuell: {total}%")
 
             return value
+
+    def validate(self, attrs):
+        start = attrs.get("start_date", getattr(self.instance, "start_date", None))
+        end = attrs.get("end_date", getattr(self.instance, "end_date", None))
+        if start and end and end < start:
+            raise serializers.ValidationError(
+                {"end_date": "Das Enddatum darf nicht vor dem Startdatum liegen."}
+            )
+        return attrs
 
 
 class IncomeSerializer(serializers.ModelSerializer):
