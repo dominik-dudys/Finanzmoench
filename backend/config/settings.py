@@ -46,6 +46,10 @@ CSRF_TRUSTED_ORIGINS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'unfold',
+    'unfold.contrib.filters',
+    'unfold.contrib.forms',
+    'unfold.contrib.inlines',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -95,7 +99,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -352,3 +356,14 @@ LOGIN_REDIRECT_URL = os.environ.get(
     "LOGIN_REDIRECT_URL",
     "http://localhost:5173/auth/callback",
 )
+
+UNFOLD = {
+    "SITE_TITLE": "Finanzmönch Admin",
+    "SITE_HEADER": "Finanzmönch",
+    "SITE_SYMBOL": "savings",
+    "DASHBOARD_CALLBACK": "core.dashboard.dashboard_callback",
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+    },
+}
