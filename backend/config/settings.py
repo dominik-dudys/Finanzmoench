@@ -332,6 +332,11 @@ LOGGING = {
                     'level': APP_LOG_LEVEL,
                     'propagate': False,
         },
+        'payment': {
+            'handlers': ['console', 'file'],
+            'level': APP_LOG_LEVEL,
+            'propagate': False,
+        },
         'django': {
                     'handlers': ['console', 'file'],
                     'level': 'INFO',
@@ -347,8 +352,10 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 # get stripe keys
-STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
-STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_PLUBLIC_KEY')
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_PRIVATE_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+STRIPE_PRICE_ID_PREMIUM = os.environ.get("STRIPE_PRICE_ID_PREMIUM", "")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
 # Holt die Daten jetzt sicher aus der .env-Datei
 EMAIL_HOST_USER = os.environ.get('IONOS_MAIL')

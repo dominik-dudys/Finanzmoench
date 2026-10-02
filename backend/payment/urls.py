@@ -1,7 +1,10 @@
 from django.urls import path
-from . import views
+
+from .views import CheckoutView, PortalView, SubscriptionStatusView, stripe_webhook
 
 urlpatterns = [
-    path('api/create-checkout-session/', views.create_checkout_session, name='create_checkout_session'),
-    path('api/webhook/', views.stripe_webhook, name='stripe_webhook'),
+    path('status/', SubscriptionStatusView.as_view(), name='payment-status'),
+    path('checkout/', CheckoutView.as_view(), name='payment-checkout'),
+    path('portal/', PortalView.as_view(), name='payment-portal'),
+    path('webhook/', stripe_webhook, name='payment-webhook'),
 ]

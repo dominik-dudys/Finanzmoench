@@ -1,63 +1,76 @@
-from django.shortcuts import render
+import json
+import logging
 
-# Create your views here.
 import stripe
 from django.conf import settings
-from django.http import JsonResponse, HttpResponse
+from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-stripe.api_key = settings.STRIPE_SECRET_KEY
+from .models import Subscription
+from .services import create_checkout_url, create_portal_url, is_premium, sync_subscription
 
-@csrf_exempt
-def create_checkout_session(request):
-    if request.method == 'POST':
+logger = logging.getLogger(__name__)
+
+
+class SubscriptionStatusView(APIView):
+    def get(self, request):
+        sub = Subscription.objects.filter(person=request.user).first()
+        return Response({
+            "plan": sub.plan if sub else Subscription.PLAN_FREE,
+            "is_premium": bool(sub and sub.is_active),
+            "status": sub.status if sub else None,
+            "current_period_end": sub.current_period_end if sub else None,
+            "cancel_at_period_end": sub.cancel_at_period_end if sub else False,
+        })
+
+
+class CheckoutView(APIView):
+    def post(self, request):
+        if is_premium(request.user):
+            return Response({"code": "already_premium"}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            session = stripe.checkout.Session.create(
-                payment_method_types=['card', 'paypal'],
-                line_items=[{
-                    'price_data': {
-                        'currency': 'eur', # maybe make this flexible after
-                        'product_data': {
-                            'name': 'Mein tolles Produkt',
-                        },
-                        'unit_amount': 2000,# ammoun in cent
-                    },
-                    'quantity': 1,
-                }],
-                mode='payment',
-                success_url='http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}',
-                cancel_url='http://localhost:3000/cancel',
-            )
-
-            return JsonResponse({'url': session.url})
-
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=403)
-
-    return JsonResponse({'error': 'Nur POST-Requests erlaubt'}, status=405)
+            return Response({"url": create_checkout_url(request.user)})
+        except stripe.StripeError:
+            logger.exception("Stripe-Checkout fehlgeschlagen")
+            return Response({"code": "payment_provider_error"}, status=status.HTTP_502_BAD_GATEWAY)
 
 
+class PortalView(APIView):
+    def post(self, request):
+        if not Subscription.objects.filter(person=request.user).exists():
+            return Response({"code": "no_subscription"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            return Response({"url": create_portal_url(request.user)})
+        except stripe.StripeError:
+            logger.exception("Stripe-Portal fehlgeschlagen")
+            return Response({"code": "payment_provider_error"}, status=status.HTTP_502_BAD_GATEWAY)
+
+
+SUBSCRIPTION_EVENTS = {
+    "customer.subscription.created",
+    "customer.subscription.updated",
+    "customer.subscription.deleted",
+}
 
 
 @csrf_exempt
+@require_POST
 def stripe_webhook(request):
-    payload = request.body
-    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
-    event = None
-
     try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        stripe.Webhook.construct_event(
+            request.body,
+            request.headers.get("Stripe-Signature", ""),
+            settings.STRIPE_WEBHOOK_SECRET,
         )
-    except ValueError as e:
+    except (ValueError, stripe.SignatureVerificationError):
+        logger.warning("Ungültiger Stripe-Webhook abgelehnt")
         return HttpResponse(status=400)
-    except stripe.error.SignatureVerificationError as e:
-        return HttpResponse(status=400)
 
-    if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-
-        # TODO
-        print("Zahlung war erfolgreich für Session:", session.get('id'))
-
+    event = json.loads(request.body)
+    if event["type"] in SUBSCRIPTION_EVENTS:
+        sync_subscription(event["data"]["object"])
     return HttpResponse(status=200)
