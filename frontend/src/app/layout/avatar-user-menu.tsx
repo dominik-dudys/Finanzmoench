@@ -33,7 +33,7 @@ export function AvatarUserMenu() {
                         <a href="/profil">Profil</a>
                     </DropdownMenuItem>
                     <DropdownMenuItem>
-                        <a href="/einstellungen">Einstlelungen</a>
+                        <a href="/einstellungen">Einstellungen</a>
                     </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator/>
