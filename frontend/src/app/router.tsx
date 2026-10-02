@@ -1,13 +1,26 @@
 import {createBrowserRouter} from "react-router";
 import {MarketingLayout} from "@/app/layout/marketing-layout.tsx";
-import {HomePage} from "@/app/home-page.tsx";
+import {HomePage} from "@/app/pages/home-page.tsx";
 import {LoginPage} from "@/features/auth/login-page.tsx";
 import {DashboardLayout} from "@/app/layout/dashboard-layout.tsx";
 import {RegisterPage} from "@/features/auth/register-page.tsx";
-import {ForgotPassword} from "@/app/forgot-password-page.tsx";
+import {ForgotPassword} from "@/app/pages/login/forgot-password-page.tsx";
 import {LoginCallbackPage} from "@/features/auth";
 import {ProtectedRoute} from "@/features/auth/protected-route.tsx";
-import {DashboardPage} from "@/app/dashboard-page.tsx";
+import {DashboardPage} from "@/app/pages/dashboard-page.tsx";
+import {VertragPage} from "@/app/pages/vertrag-page.tsx";
+import {KategoriePage} from "@/app/pages/kategorie-page.tsx";
+import {JeremyPage} from "@/app/pages/jeremy-page.tsx";
+import {SettingsPage} from "@/app/pages/settings-page.tsx";
+import {ProfilePage} from "@/app/pages/profile-page.tsx";
+import {VerifyEmailPage} from "@/app/pages/verify-email-page.tsx";
+import {LoginCodePage} from "@/app/pages/login/login-code-page.tsx";
+import {ResetPasswordPage} from "@/app/pages/login/reset-password-page.tsx";
+import {HouseholdPage} from "@/app/pages/household-page.tsx";
+import {ImpressumPage} from "@/app/pages/impressum-page.tsx";
+import {AdaptiveLayout} from "@/app/layout/adaptive-layout.tsx";
+import {DatenschutzPage} from "@/app/pages/datenschutz-page.tsx";
+import {LoginTwoFactorPage} from "@/app/pages/login/login-2fa-page.tsx";
 
 
 export const router = createBrowserRouter([
@@ -17,9 +30,22 @@ export const router = createBrowserRouter([
         children: [
             {index: true, element: <HomePage/>},
             {path: 'login', element: <LoginPage/>},
+            {path: 'login/code', element: <LoginCodePage/>},
+            {path: 'login/2fa', element: <LoginTwoFactorPage/>},
             {path: 'register', element: <RegisterPage/>},
-            {path: 'forgot-password', element: <ForgotPassword/>}
+            {path: 'register/verify', element: <VerifyEmailPage/>},
+            {path: 'forgot-password', element: <ForgotPassword/>},
+            {path: 'forgot-password/reset', element: <ResetPasswordPage/>},
+
         ],
+    },
+    {
+      element: <AdaptiveLayout/>,
+        children: [
+            {path: 'impressum', element: <ImpressumPage/>},
+            {path: 'datenschutz', element: <DatenschutzPage/>},
+        ]
+
     },
     {
       path: 'auth/callback',
@@ -31,7 +57,14 @@ export const router = createBrowserRouter([
           {
               element: <DashboardLayout/>,
               children: [
-                  {path: 'dashboard', element: <DashboardPage/>}
+                  {path: 'dashboard', element: <DashboardPage/>},
+                  {path: 'vertrag', element: <VertragPage/>},
+                  {path: 'kategorien', element: <KategoriePage/>},
+                  {path: 'jeremy', element: <JeremyPage/>},
+                  {path: 'einstellungen', element: <SettingsPage/>},
+                  {path: 'profil', element: <ProfilePage/>},
+                  {path: 'household', element: <HouseholdPage/>},
+
               ]
           }
       ]

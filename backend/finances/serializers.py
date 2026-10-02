@@ -1,58 +1,120 @@
 from rest_framework import serializers
-from .models import CostItem, ItemEntry, Income, Transaction
+from .models import CostItem, Income, CostShare
+from households.models import PositionCategory
+from decimal import Decimal
+from django.db import transaction
+from django.utils import timezone
+
+
+class CostShareSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CostShare
+        fields = ['person', 'percentage']
 
 
 class CostItemSerializer(serializers.ModelSerializer):
+    shares = CostShareSerializer(many=True)
+
+    position_category = serializers.PrimaryKeyRelatedField(
+        queryset=PositionCategory.objects.all(),
+        required=True,
+        error_messages={'null': 'Bitte wähle eine Kategorie aus.', 'required': 'Dieses Feld ist zwingend erforderlich.'}
+    )
+
     class Meta:
         model = CostItem
         fields = [
             "cost_item_id",
+            "history_group_id",
             "household",
             "position_category",
             "name",
+            "amount",
             "description",
             "interval",
-        ]
-        read_only_fields = ["cost_item_id", "household"]
-
-
-class ItemEntrySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ItemEntry
-        fields = [
-            "item_entry_id",
-            "cost_item",
-            "amount",
+            "start_date",
+            "end_date",
             "valid_from",
             "valid_until",
-            "note",
+            "shares",
         ]
-        read_only_fields = ["item_entry_id"]
+        read_only_fields = ["cost_item_id", "history_group_id", "household", "valid_from", "valid_until"]
+
+    def validate_shares(self, value):
+            if not value:
+                raise serializers.ValidationError("Es muss mindestens ein Share angegeben werden!")
+
+            total = sum(share['percentage'] for share in value)
+
+            if total != Decimal('100.00'):
+                raise serializers.ValidationError(f"Die Aufteilung muss exakt 100% ergeben. Aktuell: {total}%")
+
+            return value
+
+    def validate(self, attrs):
+        start = attrs.get("start_date", getattr(self.instance, "start_date", None))
+        end = attrs.get("end_date", getattr(self.instance, "end_date", None))
+        if start and end and end < start:
+            raise serializers.ValidationError(
+                {"end_date": "Das Enddatum darf nicht vor dem Startdatum liegen."}
+            )
+        return attrs
 
 
 class IncomeSerializer(serializers.ModelSerializer):
+    position_category = serializers.PrimaryKeyRelatedField(
+        queryset=PositionCategory.objects.all(),
+        required=True,
+        error_messages={'null': 'Bitte wähle eine Kategorie aus.', 'required': 'Dieses Feld ist zwingend erforderlich.'}
+    )
+
     class Meta:
         model = Income
         fields = [
             "income_id",
             "person",
-            "position_category",
             "amount",
             "valid_from",
             "valid_until",
-        ]
-        read_only_fields = ["income_id", "person"]
-
-
-class TransactionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Transaction
-        fields = [
-            "transaction_id",
-            "person",
             "position_category",
-            "amount",
-            "date",
-            "note",
         ]
-        read_only_fields = ["transaction_id", "person", "date"]
+        read_only_fields = ["income_id", "valid_until", "person", "valid_from"]
+
+
+class GlobalSharesSerializer(serializers.Serializer):
+    SPLIT_CHOICES = [
+        ('custom', 'Nutzerdefiniert'),
+        ('equal', 'Gleichmäßig (z.B. 50/50)'),
+        ('fair', 'Fair (nach Einkommen)')
+    ]
+
+    split_mode = serializers.ChoiceField(choices=SPLIT_CHOICES, default='custom')
+
+    cost_item_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=False,
+        allow_empty=True,
+    )
+
+    exclude_income_category_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=False,
+        allow_empty=True,
+        help_text="Liste von Einkommenskategorie-IDs, die bei der Fair-Berechnung ignoriert werden sollen."
+    )
+
+    shares = CostShareSerializer(many=True, required=False)
+
+    def validate(self, data):
+        mode = data.get('split_mode', 'custom')
+        shares = data.get('shares', [])
+
+        if mode == 'custom':
+            if not shares:
+                raise serializers.ValidationError({"shares": "Bei 'custom' müssen Shares angegeben werden."})
+
+            total = sum(share['percentage'] for share in shares)
+            if total != Decimal('100.00'):
+                raise serializers.ValidationError({"shares": f"Die Aufteilung muss exakt 100% ergeben. Aktuell: {total}%"})
+
+        return data

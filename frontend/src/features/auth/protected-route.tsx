@@ -1,4 +1,4 @@
-import {useAuth} from "@/features/auth/AuthContext.tsx";
+import {useAuth} from "@/features/auth/useAuth.ts";
 import {Navigate, Outlet} from "react-router";
 
 export function ProtectedRoute(){

@@ -24,10 +24,10 @@ load_dotenv(BASE_DIR.parent / ".env")
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ry9j+=208ih642u@kz432$c5y_x1+k(f2w%=_^(h&@^^)^d*#%'
+SECRET_KEY = os.environ["SECRET_KEY_BE"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "0") == "1"
 
 ALLOWED_HOSTS = ['finanzmönch.de', 'www.finanzmönch.de','xn--finanzmnch-kcb.de', 'www.xn--finanzmnch-kcb.de', '127.0.0.1', 'localhost', '127.0.0.1:8000']  # Für Produktion später echte Domain eintragen!!
 
@@ -37,11 +37,19 @@ CSRF_TRUSTED_ORIGINS = [
     "https://xn--finanzmnch-kcb.de",
     "https://www.xn--finanzmnch-kcb.de",
     "http://localhost:5173",
+    "https://xn--finanzmnch-kcb.de",
+    "https://www.xn--finanzmnch-kcb.de",
+    "http://localhost:5173",
+    "http://localhost",
 ]
 
 # Application definition
 
 INSTALLED_APPS = [
+    'unfold',
+    'unfold.contrib.filters',
+    'unfold.contrib.forms',
+    'unfold.contrib.inlines',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -66,6 +74,7 @@ INSTALLED_APPS = [
     'accounts',
     'households',
     'finances',
+    'feature_flags',
     "rest_framework",
     "corsheaders",
     "drf_spectacular",
@@ -91,7 +100,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -157,8 +166,26 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+# bei registrierung wird ein Code verschickt
+ACCOUNT_EMAIL_VERIFICATION_BY_CODE_ENABLED = True
+
+#Alter von Cookies
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 60 * 60 * 8
+
+#Bei login Code per mail bei Passwort Login
+ACCOUNT_LOGIN_BY_CODE_ENABLED = True
+ACCOUNT_LOGIN_BY_CODE_REQUIRED = {"password"}
+ACCOUNT_LOGIN_BY_CODE_SUPPORTS_RESEND = True
+
+#Passwort zurücksetzen
+ACCOUNT_PASSWORD_RESET_BY_CODE_ENABLED = True
+
+ACCOUNT_ADAPTER = "accounts.adapter.AccountAdapter"
+ALLAUTH_USER_CODE_FORMAT = {"length": 6, "numeric": True, "dashed": False}
 
 MFA_SUPPORTED_TYPES = ['totp', 'recovery_codes']
+MFA_TOTP_ISSUER = "Finanzmönch"
 
 HEADLESS_ONLY = False
 
@@ -312,7 +339,9 @@ LOGGING = {
     },
 }
 # E-Mail Konfiguration für IONOS
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND') or 'django.core.mail.backends.smtp.EmailBackend'
+
 EMAIL_HOST = 'smtp.ionos.de'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
@@ -332,3 +361,14 @@ LOGIN_REDIRECT_URL = os.environ.get(
     "LOGIN_REDIRECT_URL",
     "http://localhost:5173/auth/callback",
 )
+
+UNFOLD = {
+    "SITE_TITLE": "Finanzmönch Admin",
+    "SITE_HEADER": "Finanzmönch",
+    "SITE_SYMBOL": "savings",
+    "DASHBOARD_CALLBACK": "core.dashboard.dashboard_callback",
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+    },
+}

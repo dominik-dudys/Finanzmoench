@@ -27,10 +27,15 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('api/auth/', include('allauth.headless.urls')),
 
-    path('finances/', include('finances.urls')),
-    path('api/', include('voice_ai.urls')),
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/finances/', include('finances.urls')),
+    path('api/voice-ai/', include('voice_ai.urls')),
+    path('api/households/', include('households.urls')),
 
+    path('api/flags/', include('feature_flags.urls')),
+
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+
+    path('api/accounts/', include('accounts.urls')),
 ]
 

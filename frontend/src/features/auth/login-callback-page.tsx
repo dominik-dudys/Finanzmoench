@@ -1,4 +1,4 @@
-import {useAuth} from "@/features/auth/AuthContext.tsx";
+import {useAuth} from "@/features/auth/useAuth.ts";
 import {useNavigate} from "react-router";
 import {useEffect, useState} from "react";
 import {toAuthState} from "@/features/auth/auth-state.ts";
@@ -24,7 +24,7 @@ export function LoginCallbackPage(){
             if (state.status === "authenticated"){
                 navigate("/dashboard", {replace: true})
             } else if (state.status === "pending_2fa"){
-                navigate("/login", {replace: true})
+                navigate("/login/2fa", {replace: true})
             } else {
                 setFailed(true);
             }
