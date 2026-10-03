@@ -12,3 +12,4 @@ django-unfold==0.108.0
 drf-spectacular
 google-genai
 requests
+stripe
