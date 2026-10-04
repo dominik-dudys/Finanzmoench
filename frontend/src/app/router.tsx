@@ -8,7 +8,7 @@ import {ForgotPassword} from "@/app/pages/login/forgot-password-page.tsx";
 import {LoginCallbackPage} from "@/features/auth";
 import {ProtectedRoute} from "@/features/auth/protected-route.tsx";
 import {DashboardPage} from "@/app/pages/dashboard-page.tsx";
-import {VertragPage} from "@/app/pages/vertrag-page.tsx";
+import {CostPage} from "@/app/pages/cost-page.tsx";
 import {KategoriePage} from "@/app/pages/kategorie-page.tsx";
 import {JeremyPage} from "@/app/pages/jeremy-page.tsx";
 import {SettingsPage} from "@/app/pages/settings-page.tsx";
@@ -58,12 +58,12 @@ export const router = createBrowserRouter([
               element: <DashboardLayout/>,
               children: [
                   {path: 'dashboard', element: <DashboardPage/>},
-                  {path: 'vertrag', element: <VertragPage/>},
                   {path: 'kategorien', element: <KategoriePage/>},
                   {path: 'jeremy', element: <JeremyPage/>},
                   {path: 'einstellungen', element: <SettingsPage/>},
                   {path: 'profil', element: <ProfilePage/>},
                   {path: 'household', element: <HouseholdPage/>},
+                  {path: 'cost', element: <CostPage/>}
 
               ]
           }
