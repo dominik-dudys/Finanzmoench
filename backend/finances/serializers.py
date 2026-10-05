@@ -118,3 +118,42 @@ class GlobalSharesSerializer(serializers.Serializer):
                 raise serializers.ValidationError({"shares": f"Die Aufteilung muss exakt 100% ergeben. Aktuell: {total}%"})
 
         return data
+
+
+class PeriodStatsSerializer(serializers.Serializer):
+    month = serializers.IntegerField()
+    year = serializers.IntegerField()
+
+class OverviewStatsSerializer(serializers.Serializer):
+    total_income = serializers.DecimalField(max_digits=12, decimal_places=2)
+    total_costs = serializers.DecimalField(max_digits=12, decimal_places=2)
+    total_surplus = serializers.DecimalField(max_digits=12, decimal_places=2)
+    expense_ratio_percentage = serializers.DecimalField(max_digits=5, decimal_places=2)
+
+class CostCategoryStatsSerializer(serializers.Serializer):
+    category_id = serializers.CharField()
+    name = serializers.CharField()
+    color_code = serializers.CharField()
+    total_amount = serializers.DecimalField(max_digits=12, decimal_places=2)
+    percentage_of_costs = serializers.DecimalField(max_digits=5, decimal_places=2)
+
+class IncomeCategoryStatsSerializer(serializers.Serializer):
+    category_id = serializers.CharField()
+    name = serializers.CharField()
+    color_code = serializers.CharField()
+    total_amount = serializers.DecimalField(max_digits=12, decimal_places=2)
+    percentage_of_income = serializers.DecimalField(max_digits=5, decimal_places=2)
+
+class PersonStatsSerializer(serializers.Serializer):
+    person_id = serializers.UUIDField()
+    first_name = serializers.CharField()
+    total_income = serializers.DecimalField(max_digits=12, decimal_places=2)
+    cost_share_amount = serializers.DecimalField(max_digits=12, decimal_places=2)
+    disposable_income = serializers.DecimalField(max_digits=12, decimal_places=2)
+
+class DashboardResponseSerializer(serializers.Serializer):
+    period = PeriodStatsSerializer()
+    overview = OverviewStatsSerializer()
+    persons = PersonStatsSerializer(many=True)
+    cost_categories = CostCategoryStatsSerializer(many=True)
+    income_categories = IncomeCategoryStatsSerializer(many=True)

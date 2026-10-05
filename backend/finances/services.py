@@ -3,10 +3,14 @@ from django.utils import timezone
 from .models import CostItem, CostShare, Income
 from accounts.models import Person
 from rest_framework.exceptions import ValidationError
+import datetime
+import calendar
 from datetime import date
 from django.shortcuts import get_object_or_404
 from django.db.models import Q, Sum
 from decimal import Decimal, ROUND_HALF_UP
+from django.db.models import Prefetch
+
 
 
 def get_price_for_date(cost_item, target_date: date):
@@ -253,3 +257,158 @@ def bulk_update_cost_shares(*, household, split_mode: str, shares_data: list = N
         updated_items.append(new_item)
 
     return updated_items
+
+
+def calculate_dashboard_stats(household, month: int, year: int) -> dict:
+    try:
+        first_day = datetime.date(year, month, 1)
+        _, last_day_of_month = calendar.monthrange(year, month)
+        last_day = datetime.date(year, month, last_day_of_month)
+    except ValueError:
+        raise ValueError("Ungültiger Monat oder Jahr.")
+
+    incomes_qs = Income.objects.filter(
+        person__household=household,
+        valid_from__lte=last_day
+    ).filter(
+        Q(valid_until__isnull=True) | Q(valid_until__gte=first_day)
+    ).order_by('history_group_id', '-valid_from')
+
+    seen_income_groups = set()
+    active_incomes = []
+    for inc in incomes_qs:
+        if inc.history_group_id not in seen_income_groups:
+            active_incomes.append(inc)
+            seen_income_groups.add(inc.history_group_id)
+
+    costs_qs = CostItem.objects.filter(
+        household=household,
+        valid_from__lte=last_day
+    ).filter(
+        Q(valid_until__isnull=True) | Q(valid_until__gte=first_day)
+    ).prefetch_related('shares', 'position_category').order_by('history_group_id', '-valid_from')
+
+    # Entfernen veralteter Duplikate
+    seen_cost_groups = set()
+    active_costs = []
+    for cost in costs_qs:
+        if cost.history_group_id not in seen_cost_groups:
+            active_costs.append(cost)
+            seen_cost_groups.add(cost.history_group_id)
+
+    # Intervall zu Monat Umrechnung
+    def get_monthly_amount(cost: CostItem) -> Decimal:
+        if cost.interval == CostItem.IntervalChoices.YEARLY:
+            return cost.amount / Decimal('12')
+        elif cost.interval == CostItem.IntervalChoices.WEEKLY:
+            return (cost.amount * Decimal('52')) / Decimal('12')
+        elif cost.interval == CostItem.IntervalChoices.DAILY:
+            return (cost.amount * Decimal('365')) / Decimal('12')
+        return cost.amount
+
+    # Gesamtberechnung
+    total_income = sum(inc.amount for inc in active_incomes)
+    total_costs = sum(get_monthly_amount(cost) for cost in active_costs)
+
+    total_surplus = total_income - total_costs
+
+    expense_ratio = Decimal('0.00')
+    if total_income > 0:
+        expense_ratio = (total_costs / total_income) * Decimal('100.00')
+
+    # Ausgabenkategorien
+    cost_category_stats = {}
+    for cost in active_costs:
+        cat = cost.position_category
+        cat_id = str(cat.position_id) if cat else "none"
+        cat_name = cat.name if cat else "Ohne Kategorie"
+        color = cat.color_code if cat and cat.color_code else "#999999"
+
+        monthly_cost_amount = get_monthly_amount(cost)
+
+        if cat_id not in cost_category_stats:
+            cost_category_stats[cat_id] = {
+                "category_id": cat_id,
+                "name": cat_name,
+                "color_code": color,
+                "total_amount": Decimal('0.00'),
+                "percentage_of_costs": Decimal('0.00')
+            }
+        cost_category_stats[cat_id]["total_amount"] += monthly_cost_amount
+
+    for cat_data in cost_category_stats.values():
+        if total_costs > 0:
+            cat_data["percentage_of_costs"] = (cat_data["total_amount"] / total_costs) * Decimal('100.00')
+        cat_data["total_amount"] = round(cat_data["total_amount"], 2)
+        cat_data["percentage_of_costs"] = round(cat_data["percentage_of_costs"], 2)
+
+    # Einkommenskategorien
+    income_category_stats = {}
+    for inc in active_incomes:
+        cat = inc.position_category
+        cat_id = str(cat.position_id) if cat else "none"
+        cat_name = cat.name if cat else "Ohne Kategorie"
+        color = cat.color_code if cat and cat.color_code else "#4CAF50"
+
+        if cat_id not in income_category_stats:
+            income_category_stats[cat_id] = {
+                "category_id": cat_id,
+                "name": cat_name,
+                "color_code": color,
+                "total_amount": Decimal('0.00'),
+                "percentage_of_income": Decimal('0.00')
+            }
+        income_category_stats[cat_id]["total_amount"] += inc.amount
+
+    for cat_data in income_category_stats.values():
+        if total_income > 0:
+            cat_data["percentage_of_income"] = (cat_data["total_amount"] / total_income) * Decimal('100.00')
+        cat_data["total_amount"] = round(cat_data["total_amount"], 2)
+        cat_data["percentage_of_income"] = round(cat_data["percentage_of_income"], 2)
+
+    # Personenberechnung
+    persons = Person.objects.filter(household=household)
+    personal_stats = {}
+
+    for p in persons:
+        personal_stats[str(p.person_id)] = {
+            "person_id": str(p.person_id),
+            "first_name": p.first_name,
+            "total_income": Decimal('0.00'),
+            "cost_share_amount": Decimal('0.00'),
+            "disposable_income": Decimal('0.00')
+        }
+
+    for inc in active_incomes:
+        pid = str(inc.person_id)
+        if pid in personal_stats:
+            personal_stats[pid]["total_income"] += inc.amount
+
+    for cost in active_costs:
+        monthly_cost_amount = get_monthly_amount(cost)
+        for share in cost.shares.all():
+            pid = str(share.person_id)
+            if pid in personal_stats:
+                personal_share = (monthly_cost_amount * share.percentage) / Decimal('100.00')
+                personal_stats[pid]["cost_share_amount"] += personal_share
+
+    for p_data in personal_stats.values():
+        p_data["total_income"] = round(p_data["total_income"], 2)
+        p_data["cost_share_amount"] = round(p_data["cost_share_amount"], 2)
+        p_data["disposable_income"] = round(p_data["total_income"] - p_data["cost_share_amount"], 2)
+
+    return {
+        "period": {
+            "month": month,
+            "year": year
+        },
+        "overview": {
+            "total_income": round(total_income, 2),
+            "total_costs": round(total_costs, 2),
+            "total_surplus": round(total_surplus, 2),
+            "expense_ratio_percentage": round(expense_ratio, 2)
+        },
+        "persons": list(personal_stats.values()),
+        "cost_categories": list(cost_category_stats.values()),
+        "income_categories": list(income_category_stats.values())
+    }
