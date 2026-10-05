@@ -6,7 +6,7 @@ import {
 
 const KEY = ["categories"];
 
-/** Alle Kategorien des Haushalts (Ausgaben + Einkommen) – gefiltert wird im Frontend */
+// Alle Kategorien des Haushalts (Ausgaben + Einkommen) – gefiltert wird im Frontend
 export function useCategories() {
     return useQuery({
         queryKey: KEY,
@@ -14,12 +14,11 @@ export function useCategories() {
     });
 }
 
-/** Nach jeder Änderung Kategorien neu laden (und Verträge, falls die Seite schon existiert) */
 function useInvalidate() {
     const qc = useQueryClient();
     return () => {
         qc.invalidateQueries({queryKey: KEY});
-        qc.invalidateQueries({queryKey: ["contracts"]});
+        qc.invalidateQueries({queryKey: ["cost-items"]});
     };
 }
 
