@@ -366,7 +366,7 @@ def calculate_dashboard_stats(household, month: int, year: int) -> dict:
         cat_data["total_amount"] = round(cat_data["total_amount"], 2)
         cat_data["percentage_of_income"] = round(cat_data["percentage_of_income"], 2)
 
-    # Personenberechnung
+    # Personenberechnungen
     persons = Person.objects.filter(household=household)
     personal_stats = {}
 
