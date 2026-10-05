@@ -6,7 +6,7 @@ import {FooterComponent} from "@/shared/components/footer-component.tsx";
 const NAV_ITEMS = [
     {to: "/dashboard", label: "Dashboard"},
     {to: "/household", label: "Haushalte"},
-    {to: "/vertrag", label: "Verträge"},
+    {to: "/cost", label: "Kosten"},
     {to: "/kategorien", label: "Kategorien"},
     {to: "/jeremy", label: "JeremyAI"},
 ];
