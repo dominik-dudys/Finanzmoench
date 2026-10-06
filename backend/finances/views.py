@@ -6,6 +6,7 @@ import os
 import sys
 import traceback
 import requests
+import datetime
 from urllib.parse import quote
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -24,9 +25,10 @@ from .services import (
     update_income,
     delete_income,
     calculate_shares_for_mode,
-    bulk_update_cost_shares
+    bulk_update_cost_shares,
+    calculate_dashboard_stats
 )
-from .serializers import CostItemSerializer, IncomeSerializer, GlobalSharesSerializer, CostShareSerializer
+from .serializers import CostItemSerializer, IncomeSerializer, GlobalSharesSerializer, CostShareSerializer, DashboardResponseSerializer
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.db.models import Q
 from django.utils.dateparse import parse_date
@@ -376,3 +378,38 @@ class GlobalSharesView(APIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DashboardStatsView(APIView):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(name='month', description='Monat als Zahl (1-12)', required=False, type=int),
+            OpenApiParameter(name='year', description='Jahr (z.B. 2026)', required=False, type=int)
+        ],
+        responses=DashboardResponseSerializer,
+        summary="Holt alle Dashboard-Berechnungen (Einkommen, Ausgaben, Anteile) für einen bestimmten Monat."
+    )
+    def get(self, request):
+        household = request.user.household
+        if not household:
+            return Response({"error": "Du bist in keinem Haushalt."}, status=status.HTTP_400_BAD_REQUEST)
+
+        today = datetime.date.today()
+        month_param = request.query_params.get('month')
+        year_param = request.query_params.get('year')
+
+        try:
+            month = int(month_param) if month_param else today.month
+            year = int(year_param) if year_param else today.year
+        except ValueError:
+            return Response({"error": "Monat und Jahr müssen gültige Zahlen sein."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            raw_data = calculate_dashboard_stats(household, month, year)
+
+            serializer = DashboardResponseSerializer(data=raw_data)
+            serializer.is_valid(raise_exception=True)
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
