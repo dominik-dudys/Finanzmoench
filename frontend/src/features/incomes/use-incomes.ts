@@ -44,14 +44,6 @@ export function useArchiveIncome() {
     });
 }
 
-export function useIncomesAt(date: string | null) {
-    return useQuery({
-        queryKey: [...KEY, "at", date],
-        queryFn: () => getIncomes(date ?? undefined),
-        enabled: date !== null,
-    });
-}
-
 export function useEndedIncomes(dates: string[], activeIds: Set<string>) {
     const results = useQueries({
         queries: dates.map((date) => ({
