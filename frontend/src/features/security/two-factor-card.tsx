@@ -98,7 +98,7 @@ export function TwoFactorCard() {
                     /* ---------- 2FA aktiv ---------- */
                     <>
                         <p className="text-sm">
-                            ✅ Aktiv seit {new Date(totp.created_at * 1000).toLocaleDateString("de-DE")}
+                            Aktiv seit {new Date(totp.created_at * 1000).toLocaleDateString("de-DE")}
                         </p>
                         {recovery?.type === "recovery_codes" && (
                             <p className="text-sm text-muted-foreground">
