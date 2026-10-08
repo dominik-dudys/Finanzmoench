@@ -19,8 +19,10 @@ export type IncomeErrors =
 
 const BASE = "finances/";
 
-export async function getIncomes(): Promise<Income[]> {
-    const res = await apiClient.get<Income[]>(`${BASE}incomes-show/`);
+export async function getIncomes(date?: string): Promise<Income[]> {
+    const res = await apiClient.get<Income[]>(`${BASE}incomes-show/`, {
+        params: date ? {date} : undefined,
+    });
     return res.data;
 }
 
