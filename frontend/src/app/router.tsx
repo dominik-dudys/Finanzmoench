@@ -21,6 +21,7 @@ import {ImpressumPage} from "@/app/pages/impressum-page.tsx";
 import {AdaptiveLayout} from "@/app/layout/adaptive-layout.tsx";
 import {DatenschutzPage} from "@/app/pages/datenschutz-page.tsx";
 import {LoginTwoFactorPage} from "@/app/pages/login/login-2fa-page.tsx";
+import {IncomePage} from "@/app/pages/income-page.tsx";
 
 
 export const router = createBrowserRouter([
@@ -63,7 +64,8 @@ export const router = createBrowserRouter([
                   {path: 'einstellungen', element: <SettingsPage/>},
                   {path: 'profil', element: <ProfilePage/>},
                   {path: 'household', element: <HouseholdPage/>},
-                  {path: 'cost', element: <CostPage/>}
+                  {path: 'cost', element: <CostPage/>},
+                  {path: 'income', element: <IncomePage/>}
 
               ]
           }
