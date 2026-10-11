@@ -5,6 +5,7 @@ import {TwoFactorCard} from "@/features/security/two-factor-card.tsx";
 import {useLocation} from "react-router";
 import {useEffect} from "react";
 import {AiConsentCard} from "@/features/jeremyai/ai-consent-card.tsx";
+import {PremiumCard} from "@/features/payment/premium-card";
 
 export function SettingsPage() {
     const {data: me, isLoading} = useMe();
@@ -26,6 +27,9 @@ export function SettingsPage() {
 
             <h2 className="text-lg font-semibold">JeremyAI</h2>
             <AiConsentCard me={me}/>
+
+            <h2 className="text-lg font-semibold">Abo</h2>
+            <PremiumCard/>
         </div>
     );
 }
