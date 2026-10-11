@@ -32,7 +32,7 @@ const RANGE_TEXT: Record<ArchiveRange, string> = {
 export function IncomePage() {
     const {data: household, isLoading: householdLoading} = useMyHousehold();
     const {data: items = [], isLoading, isError} = useIncomes();
-    const {data: categories = []} = useCategories();
+    const {data: categories = [], isLoading: categoriesLoading} = useCategories();
     const {data: members = []} = useHouseholdMembers(!!household);
     const {data: me} = useMe();
     const [tab, setTab] = useState<Tab>("all");
@@ -153,6 +153,7 @@ export function IncomePage() {
                 open={form.open}
                 item={form.item}
                 categories={categories}
+                categoriesLoading={categoriesLoading}
                 onClose={() => setForm((s) => ({...s, open: false}))}
             />
             <ArchiveIncomeDialog
