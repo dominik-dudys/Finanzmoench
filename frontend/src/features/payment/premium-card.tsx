@@ -74,7 +74,7 @@ export function PremiumCard() {
     const actionError = startCheckout.error ?? openPortal.error;
 
     return (
-        <Card id="premium" className="scroll-mt-6">
+        <Card id="premium" className="scroll-mt-24">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     Premium
