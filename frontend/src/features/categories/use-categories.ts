@@ -1,4 +1,5 @@
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import {useMyHousehold} from "@/features/household/use-household.ts";
 import {
     createCategory, deleteCategory, getCategories, updateCategory,
     type CategoryPayload,
@@ -8,9 +9,12 @@ const KEY = ["categories"];
 
 // Alle Kategorien des Haushalts (Ausgaben + Einkommen) – gefiltert wird im Frontend
 export function useCategories() {
+    const {data: household} = useMyHousehold();
+    const householdId = household?.household_id;
     return useQuery({
-        queryKey: KEY,
+        queryKey: [...KEY, householdId],
         queryFn: getCategories,
+        enabled: !!householdId,
     });
 }
 

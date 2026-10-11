@@ -37,9 +37,10 @@ interface Props {
     onClose: () => void;
     item?: Income;
     categories: Category[];
+    categoriesLoading?: boolean;
 }
 
-export function IncomeFormDialog({open, onClose, item, categories}: Props) {
+export function IncomeFormDialog({open, onClose, item, categories, categoriesLoading = false}: Props) {
     const create = useCreateIncome();
     const update = useUpdateIncome();
     const pending = create.isPending || update.isPending;
@@ -118,7 +119,9 @@ export function IncomeFormDialog({open, onClose, item, categories}: Props) {
                                     <option key={c.position_id} value={c.position_id}>{c.name}</option>
                                 ))}
                             </select>
-                            {incomeCategories.length === 0 && (
+                            {categoriesLoading ? (
+                                <p className="text-sm text-muted-foreground">Kategorien werden geladen...</p>
+                            ) : incomeCategories.length === 0 && (
                                 <p className="text-sm text-muted-foreground">
                                     Es gibt noch keine Einkommens-Kategorie.{" "}
                                     <Link to="/kategorien" className="underline">Kategorie anlegen</Link>
