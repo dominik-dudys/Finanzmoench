@@ -15,7 +15,6 @@ import {UseLogout} from "@/features/auth/useLogout.ts";
 import {useNavigate} from "react-router";
 import {useSubscription} from "@/features/payment/use-subscription";
 import {PlanBadge} from "@/features/payment/plan-badge";
-import {Sparkles} from "lucide-react";
 
 
 export function AvatarUserMenu() {
@@ -59,11 +58,6 @@ export function AvatarUserMenu() {
                 <DropdownMenuGroup>
                     <DropdownMenuItem onClick={() => navigate("/profil")}>Profil</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate("/einstellungen")}>Einstellungen</DropdownMenuItem>
-                    {sub && !isPremium && (
-                        <DropdownMenuItem onClick={() => navigate("/einstellungen#premium")}>
-                            <Sparkles/> Premium holen
-                        </DropdownMenuItem>
-                    )}
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator/>
 

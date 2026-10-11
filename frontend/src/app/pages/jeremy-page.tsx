@@ -111,8 +111,12 @@ export function JeremyPage() {
                 )}
             </div>
 
-            {enabled && consented && usage && <UsageMeter usage={usage}/>}
-
+            {enabled && consented && usage && (
+                <UsageMeter
+                    usage={usage}
+                    action={<UpgradeButton variant="link" size="sm" label="Mehr mit Premium" className="h-auto p-0 text-xs"/>}
+                />
+            )}
             {/* ---------- Verlauf ---------- */}
             <MessageScrollerProvider autoScroll defaultScrollPosition="last-anchor">
                 <MessageScroller className="flex-1 rounded-lg border">

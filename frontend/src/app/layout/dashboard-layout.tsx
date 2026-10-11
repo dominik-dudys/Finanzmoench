@@ -2,6 +2,7 @@ import {Link, Outlet} from "react-router";
 import {buttonVariants} from "@/ui-components/ui/button.tsx";
 import {AvatarUserMenu} from "@/app/layout/avatar-user-menu.tsx";
 import {FooterComponent} from "@/shared/components/footer-component.tsx";
+import {UpgradeButton} from "@/features/payment/upgrade-button";
 
 const NAV_ITEMS = [
     {to: "/dashboard", label: "Dashboard"},
@@ -42,6 +43,7 @@ export function DashboardLayout() {
 
                     {/*Rechte Seite*/}
                     <div className="flex items-center justify-end gap-4">
+                        <UpgradeButton size="sm" hideLabelOnMobile/>
                         <AvatarUserMenu/>
                     </div>
                 </nav>

@@ -1,7 +1,12 @@
-import {Link} from "react-router";
+import type {ReactNode} from "react";
 import type {AiUsage} from "./api";
 
-export function UsageMeter({usage}: {usage: AiUsage}) {
+interface Props {
+    usage: AiUsage;
+    action?: ReactNode; // z. B. Upgrade-Button, wird rechts angezeigt
+}
+
+export function UsageMeter({usage, action}: Props) {
     const percent = usage.limit > 0 ? Math.min((usage.used / usage.limit) * 100, 100) : 0;
 
     return (
@@ -10,11 +15,7 @@ export function UsageMeter({usage}: {usage: AiUsage}) {
                 <span>
                     Noch <span className="font-medium text-foreground">{usage.remaining}</span> von {usage.limit} Fragen heute
                 </span>
-                {usage.plan === "free" && (
-                    <Link to="/einstellungen#premium" className="shrink-0 underline">
-                        Mehr mit Premium
-                    </Link>
-                )}
+                {action}
             </div>
             <div
                 className="h-1.5 w-full overflow-hidden rounded-full bg-muted"

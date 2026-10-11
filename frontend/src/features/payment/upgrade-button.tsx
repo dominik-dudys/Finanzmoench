@@ -1,21 +1,37 @@
+import {useState} from "react";
 import {Sparkles} from "lucide-react";
 import {Button} from "@/ui-components/ui/button";
-import {useStartCheckout, useSubscription} from "./use-subscription";
+import {useSubscription} from "./use-subscription";
+import {UpgradeDialog} from "./upgrade-dialog";
 
 interface Props {
     label?: string;
+    variant?: "default" | "outline" | "secondary" | "ghost" | "link";
+    size?: "default" | "sm" | "lg";
     className?: string;
+    hideLabelOnMobile?: boolean;
 }
 
-export function UpgradeButton({label = "Premium holen", className}: Props) {
+export function UpgradeButton({
+                                  label = "Premium holen",
+                                  variant = "default",
+                                  size = "default",
+                                  className,
+                                  hideLabelOnMobile = false,
+                              }: Props) {
     const {data: sub} = useSubscription();
-    const checkout = useStartCheckout();
+    const [open, setOpen] = useState(false);
 
-    if (sub?.is_premium) return null;
+    // Erst anzeigen, wenn klar ist, dass jemand Free ist (kein Aufblitzen bei Premium-Nutzern)
+    if (!sub || sub.is_premium) return null;
 
     return (
-        <Button className={className} disabled={checkout.isPending} onClick={() => checkout.mutate()}>
-            <Sparkles/> {checkout.isPending ? "Weiterleitung zu Stripe..." : label}
-        </Button>
+        <>
+            <Button variant={variant} size={size} className={className} aria-label={label} onClick={() => setOpen(true)}>
+                {variant !== "link" && <Sparkles/>}
+                <span className={hideLabelOnMobile ? "hidden sm:inline" : undefined}>{label}</span>
+            </Button>
+            <UpgradeDialog open={open} onOpenChange={setOpen}/>
+        </>
     );
 }
