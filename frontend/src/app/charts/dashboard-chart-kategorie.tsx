@@ -1,70 +1,91 @@
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/ui-components/ui/card";
-import {
-    type ChartConfig,
-    ChartContainer,
-    ChartLegend, ChartLegendContent, ChartTooltip,
-    ChartTooltipContent
-} from "@/ui-components/ui/chart.tsx";
-import {Pie, PieChart} from "recharts";
+import {type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent} from "@/ui-components/ui/chart.tsx";
+import {Label, Pie, PieChart} from "recharts";
+import {formatMoney} from "@/features/costs/format";
+import type {CostCategoryStats} from "@/features/dashboard/api";
 
+interface Props {
+    categories: CostCategoryStats[];
+    total: number;
+}
 
-export const description = "A donut chart with text"
-const chartData = [
-    { browser: "chrome", visitors: 275, fill: "#2563eb" },
-    { browser: "safari", visitors: 200, fill: "#16a34a" },
-    { browser: "firefox", visitors: 287, fill: "#f59e0b" },
-    { browser: "edge", visitors: 173, fill: "#ef4444" },
-    { browser: "other", visitors: 190, fill: "#8b5cf6" },
-]
-const chartConfig = {
-    visitors: {
-        label: "Visitors",
-    },
-    chrome: {
-        label: "Safari",
-    },
-    safari: {
-        label: "test",
-    },
-    firefox: {
-        label: "Firefox",
-    },
-    edge: {
-        label: "Edge",
-    },
-    other: {
-        label: "Other",
-    },
-} satisfies ChartConfig
+export function DashboardChartKategorie({categories, total}: Props) {
+    const sorted = [...categories].sort((a, b) => Number(b.total_amount) - Number(a.total_amount));
+    const data = sorted.map((c) => ({
+        key: c.category_id,
+        value: Number(c.total_amount),
+        fill: c.color_code,
+    }));
+    const config: ChartConfig = Object.fromEntries(
+        sorted.map((c) => [c.category_id, {label: c.name, color: c.color_code}]),
+    );
 
-export function DashboardChartKategorie(){
-
-
-    return(
+    return (
         <Card className="flex flex-col">
-            <CardHeader className="items-center pb-0">
-                <CardTitle>Pie Chart - Legend</CardTitle>
-                <CardDescription>January - June 2024</CardDescription>
+            <CardHeader>
+                <CardTitle>Nach Kategorie</CardTitle>
+                <CardDescription>Fixkosten pro Monat</CardDescription>
             </CardHeader>
-            <CardContent className="flex-1 pb-0">
-                <ChartContainer
-                    config={chartConfig}
-                    className="mx-auto aspect-square max-h-75"
-                >
-                    <PieChart>
-                        <ChartTooltip
-                            content={<ChartTooltipContent nameKey="browser" hideLabel />}
-                        />
-                        <Pie data={chartData} dataKey="visitors" />
-                        <ChartLegend
-                            content={<ChartLegendContent nameKey="browser" />}
-                            className="-translate-y-2 flex-wrap gap-2 *:basis-1/4 *:justify-center"
-                        />
-                    </PieChart>
+            <CardContent className="flex flex-1 flex-col gap-4 pb-4">
+                {data.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Noch keine Kosten in diesem Monat.</p>
+                ) : (
+                    <>
+                        <ChartContainer config={config} className="mx-auto aspect-square w-full max-w-64">
+                            <PieChart>
+                                <ChartTooltip
+                                    content={
+                                        <ChartTooltipContent
+                                            nameKey="key"
+                                            hideLabel
+                                            formatter={(value, name, item) => (
+                                                <div className="flex w-full items-center gap-2">
+                                                <span className="size-2.5 shrink-0 rounded-xs" style={{backgroundColor: item.payload?.fill}}/>
+                                                    <span className="text-muted-foreground">{config[String(name)]?.label ?? name}</span>
+                                                    <span className="ml-auto pl-4 font-medium tabular-nums text-foreground">
+                                                        {formatMoney(Number(value))}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        />
+                                    }
+                                />
+                                <Pie data={data} dataKey="value" nameKey="key" innerRadius="62%" strokeWidth={4}>
+                                    <Label
+                                        content={({viewBox}) => {
+                                            if (!viewBox || !("cx" in viewBox) || !("cy" in viewBox)) return null;
+                                            const cx = viewBox.cx ?? 0;
+                                            const cy = viewBox.cy ?? 0;
+                                            return (
+                                                <text x={cx} y={cy} textAnchor="middle">
+                                                    <tspan x={cx} y={cy - 4} className="fill-foreground text-lg font-semibold">
+                                                        {formatMoney(total)}
+                                                    </tspan>
+                                                    <tspan x={cx} y={cy + 16} className="fill-muted-foreground text-xs">
+                                                        pro Monat
+                                                    </tspan>
+                                                </text>
+                                            );
+                                        }}
+                                    />
+                                </Pie>
+                            </PieChart>
+                        </ChartContainer>
 
-                </ChartContainer>
+                        {/* Eigene Legende mit Beträgen */}
+                        <ul className="flex flex-col gap-2 text-sm">
+                            {sorted.map((c) => (
+                                <li key={c.category_id} className="flex items-center gap-2">
+                                    <span className="size-2.5 shrink-0 rounded-full" style={{backgroundColor: c.color_code}} aria-hidden/>
+                                    <span className="min-w-0 flex-1 truncate">{c.name}</span>
+                                    <span className="text-muted-foreground">{Number(c.percentage_of_costs).toFixed(0)} %</span>
+                                    <span className="w-24 shrink-0 text-right font-medium">{formatMoney(c.total_amount)}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </>
+                )}
             </CardContent>
         </Card>
-
-    )
+    );
 }

@@ -1,76 +1,70 @@
-import {type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent} from "@/ui-components/ui/chart.tsx";
+import {type ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent} from "@/ui-components/ui/chart.tsx";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/ui-components/ui/card.tsx";
 import {Area, AreaChart, CartesianGrid, XAxis} from "recharts";
+import {formatMoney} from "@/features/costs/format";
 
-export function DashboardChartGesamtkosten(){
+export interface MonthPoint {
+    label: string;
+    costs: number;
+    income: number;
+}
 
-    const chartData = [
-        { month: "January", desktop: 1, mobile: 80 },
-        { month: "February", desktop: 2, mobile: 200 },
-        { month: "March", desktop: 3, mobile: 120 },
-        { month: "April", desktop: 4, mobile: 190 },
-        { month: "May", desktop: 5, mobile: 130 },
-        { month: "June", desktop: 6, mobile: 140 },
-        { month: "Juli", desktop: 7, mobile: 140 },
-        { month: "August", desktop: 8, mobile: 140 },
-        { month: "September", desktop: 9, mobile: 140 },
-        { month: "Oktober", desktop: 10, mobile: 140 },
-        { month: "November", desktop: 11, mobile: 140 },
-        { month: "Dezember", desktop: 12, mobile: 140 },
-    ]
-    const chartConfig = {
-        desktop: {
-            label: "Laufend",
-            color: "#2563eb",
-        },
-        mobile: {
-            label: "Jährlich",
-            color: "#60a5fa",
-        },
-    } satisfies ChartConfig
+const chartConfig = {
+    costs: {label: "Fixkosten", color: "#2563eb"},
+    income: {label: "Einnahmen", color: "#16a34a"},
+} satisfies ChartConfig;
 
-    return(
+interface Props {
+    data: MonthPoint[];
+}
 
+export function DashboardChartGesamtkosten({data}: Props) {
+    return (
         <Card>
             <CardHeader>
-                <CardTitle>Fixkostenentwicklung</CardTitle>
-                <CardDescription>
-                    Zeigt die Entwicklung der Fixkosten über die letzten 12 Monate
-                </CardDescription>
+                <CardTitle>Verlauf</CardTitle>
+                <CardDescription>Fixkosten und Einnahmen der letzten {data.length} Monate</CardDescription>
             </CardHeader>
             <CardContent>
-                <ChartContainer config={chartConfig} className="aspect-auto h-64 w-full">
-                    <AreaChart
-                        accessibilityLayer
-                        data={chartData}
-                        margin={{
-                            left: 12,
-                            right: 12,
-                        }}
-                    >
-                        <CartesianGrid vertical={false} />
-                        <XAxis
-                            dataKey="month"
-                            tickLine={false}
-                            axisLine={false}
-                            tickMargin={8}
-                            tickFormatter={(value) => value.slice(0, 3)}
-                        />
+                <ChartContainer config={chartConfig} className="aspect-auto h-56 w-full sm:h-64">
+                    <AreaChart accessibilityLayer data={data} margin={{left: 12, right: 12}}>
+                        <CartesianGrid vertical={false}/>
+                        <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8}/>
                         <ChartTooltip
                             cursor={false}
-                            content={<ChartTooltipContent indicator="line" />}
+                            content={
+                                <ChartTooltipContent indicator="line" formatter={(value, name, item) => (
+                                        <div className="flex w-full items-center gap-2">
+                                            <span className="h-3 w-1 shrink-0 rounded-xs" style={{backgroundColor: item.color}}/>
+                                            <span className="text-muted-foreground">
+                                                {chartConfig[name as keyof typeof chartConfig]?.label ?? name}
+                                            </span>
+                                            <span className="ml-auto pl-4 font-medium tabular-nums text-foreground">
+                                                {formatMoney(Number(value))}
+                                            </span>
+                                        </div>
+                                    )}
+                                />
+                            }
                         />
                         <Area
-                            dataKey="desktop"
-                            type="natural"
-                            fill="var(--color-desktop)"
-                            fillOpacity={0.4}
-                            stroke="var(--color-desktop)"
+                            dataKey="income"
+                            type="monotone"
+                            fill="var(--color-income)"
+                            fillOpacity={0.15}
+                            stroke="var(--color-income)"
                         />
+                        <Area
+                            dataKey="costs"
+                            type="monotone"
+                            fill="var(--color-costs)"
+                            fillOpacity={0.3}
+                            stroke="var(--color-costs)"
+                        />
+                        <ChartLegend content={<ChartLegendContent/>}/>
                     </AreaChart>
                 </ChartContainer>
             </CardContent>
         </Card>
-
-    )
+    );
 }
