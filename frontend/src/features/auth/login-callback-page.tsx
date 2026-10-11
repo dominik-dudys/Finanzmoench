@@ -2,6 +2,7 @@ import {useAuth} from "@/features/auth/useAuth.ts";
 import {useNavigate} from "react-router";
 import {useEffect, useState} from "react";
 import {toAuthState} from "@/features/auth/auth-state.ts";
+import {toast} from "sonner";
 
 export function LoginCallbackPage(){
     const {refetch} = useAuth();
@@ -22,6 +23,7 @@ export function LoginCallbackPage(){
             const state = toAuthState(result.data, false)
 
             if (state.status === "authenticated"){
+                toast.success(`Angemeldet als ${state.user.email}`);
                 navigate("/dashboard", {replace: true})
             } else if (state.status === "pending_2fa"){
                 navigate("/login/2fa", {replace: true})
@@ -40,7 +42,7 @@ export function LoginCallbackPage(){
         return (
             <div className="flex min-h-svh w-full flex-col items-center justify-center gap-4 px-6">
                 <p>Die Anmeldung ist fehlgeschlagen.</p>
-                <a href="/login" className="unterline">Zurück zum Login</a>
+                <a href="/login" className="underline">Zurück zum Login</a>
             </div>
         );
     }
