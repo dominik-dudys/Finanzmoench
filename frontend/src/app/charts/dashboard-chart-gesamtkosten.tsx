@@ -1,6 +1,7 @@
 import {type ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent} from "@/ui-components/ui/chart.tsx";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/ui-components/ui/card.tsx";
 import {Area, AreaChart, CartesianGrid, XAxis} from "recharts";
+import {formatMoney} from "@/features/costs/format";
 
 export interface MonthPoint {
     label: string;
@@ -29,7 +30,23 @@ export function DashboardChartGesamtkosten({data}: Props) {
                     <AreaChart accessibilityLayer data={data} margin={{left: 12, right: 12}}>
                         <CartesianGrid vertical={false}/>
                         <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8}/>
-                        <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line"/>}/>
+                        <ChartTooltip
+                            cursor={false}
+                            content={
+                                <ChartTooltipContent indicator="line" formatter={(value, name, item) => (
+                                        <div className="flex w-full items-center gap-2">
+                                            <span className="h-3 w-1 shrink-0 rounded-xs" style={{backgroundColor: item.color}}/>
+                                            <span className="text-muted-foreground">
+                                                {chartConfig[name as keyof typeof chartConfig]?.label ?? name}
+                                            </span>
+                                            <span className="ml-auto pl-4 font-medium tabular-nums text-foreground">
+                                                {formatMoney(Number(value))}
+                                            </span>
+                                        </div>
+                                    )}
+                                />
+                            }
+                        />
                         <Area
                             dataKey="income"
                             type="monotone"
