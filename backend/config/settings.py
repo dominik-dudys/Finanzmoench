@@ -238,6 +238,7 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
         'AUTH_PARAMS': {
             'access_type': 'online',
+            'prompt': 'select_account'
         },
     },
 
@@ -248,6 +249,7 @@ SOCIALACCOUNT_PROVIDERS = {
             'key': '',
         },
         'SCOPE': ['user:email'],
+        'AUTH_PARAMS': {'prompt': 'select_account'},
     },
 }
 
