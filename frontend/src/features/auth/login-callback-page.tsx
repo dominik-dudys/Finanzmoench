@@ -42,7 +42,7 @@ export function LoginCallbackPage(){
         return (
             <div className="flex min-h-svh w-full flex-col items-center justify-center gap-4 px-6">
                 <p>Die Anmeldung ist fehlgeschlagen.</p>
-                <a href="/login" className="unterline">Zurück zum Login</a>
+                <a href="/login" className="underline">Zurück zum Login</a>
             </div>
         );
     }
