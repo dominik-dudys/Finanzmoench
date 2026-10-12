@@ -162,8 +162,9 @@ export function JeremyPage() {
                                     <Message align={msg.role === "user" ? "end" : "start"}>
                                         {msg.role === "jeremy" && (
                                             <MessageAvatar>
-                                                <Avatar>
-                                                    <JeremyAvatarImage mode={me?.jeremy_mode} alt="Jeremy"/>                                                    <AvatarFallback>Mönch</AvatarFallback>
+                                                <Avatar className="overflow-hidden">
+                                                    <JeremyAvatarImage mode={me?.jeremy_mode} alt="Jeremy"/>
+                                                    <AvatarFallback>Mönch</AvatarFallback>
                                                 </Avatar>
                                             </MessageAvatar>
                                         )}
