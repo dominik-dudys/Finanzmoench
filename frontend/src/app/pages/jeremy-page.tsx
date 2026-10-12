@@ -2,7 +2,7 @@ import {useEffect, useRef, useState} from "react";
 import {Link} from "react-router";
 import {useQueryClient} from "@tanstack/react-query";
 import {SendHorizontal} from "lucide-react";
-import {Avatar, AvatarFallback, AvatarImage} from "@/ui-components/ui/avatar";
+import {Avatar, AvatarFallback} from "@/ui-components/ui/avatar";
 import {Bubble, BubbleContent} from "@/ui-components/ui/bubble";
 import {Message, MessageAvatar, MessageContent} from "@/ui-components/ui/message";
 import {
@@ -17,6 +17,7 @@ import {useMe} from "@/features/profile/use-me.ts";
 import {useAiUsage, useAskJeremy} from "@/features/jeremyai/use-jeremy";
 import {UsageMeter} from "@/features/jeremyai/usage-meter";
 import {UpgradeButton} from "@/features/payment/upgrade-button";
+import {JeremyAvatarImage} from "@/features/jeremyai/jeremy-avatar-image";
 
 type ChatMessage = {
     id: string;
@@ -137,8 +138,7 @@ export function JeremyPage() {
                                         {msg.role === "jeremy" && (
                                             <MessageAvatar>
                                                 <Avatar>
-                                                    <AvatarImage src="/JeremyPB.jpg" alt="Jeremy"/>
-                                                    <AvatarFallback>J</AvatarFallback>
+                                                    <JeremyAvatarImage mode={me?.jeremy_mode} alt="Jeremy"/>                                                    <AvatarFallback>Mönch</AvatarFallback>
                                                 </Avatar>
                                             </MessageAvatar>
                                         )}
