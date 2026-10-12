@@ -1,6 +1,8 @@
 import {Button} from "@/ui-components/ui/button.tsx";
 import {Card, CardContent} from "@/ui-components/ui/card.tsx";
 import {Link} from "react-router";
+import {useAuth} from "@/features/auth/useAuth";
+import {PricingSection} from "@/features/payment/pricing-section";
 
 const steps = [
     {
@@ -21,6 +23,9 @@ const steps = [
 ]
 
 export function HomePage() {
+    const {state} = useAuth();
+    const authenticated = state.status === "authenticated";
+
     return (
 <>
         <section className="mx-auto max-w-2xl px-6 py-20 text-center">
@@ -113,7 +118,7 @@ export function HomePage() {
                 </div>
             </div>
         </section>
-
+    <PricingSection authenticated={authenticated}/>
         <section className="py-16">
             <div className="mx-auto max-w-5xl px-6">
                 <div className="rounded-2xl bg-primary px-8 py-12 text-center text-primary-foreground">

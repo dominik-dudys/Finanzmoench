@@ -1,19 +1,13 @@
 import {useEffect} from "react";
-import {Check, Sparkles} from "lucide-react";
+import {Sparkles} from "lucide-react";
 import {
     Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/ui-components/ui/dialog";
 import {Button} from "@/ui-components/ui/button";
 import {useStartCheckout} from "./use-subscription";
 import {paymentErrorText} from "./errors";
-
-const FEATURES: {label: string; free: string; premium: string}[] = [
-    {label: "Fragen an JeremyAI pro Tag", free: "2", premium: "10"},
-    {label: "Kosten, Einnahmen & Dashboard", free: "✓", premium: "✓"},
-    {label: "Haushalt mit mehreren Personen", free: "✓", premium: "✓"},
-];
-
-const PRICES = {free: "Kostenlos", premium: "4,99 € / Monat"};
+import {PLAN_FEATURES, PRICES} from "./plans";
+import {PlanValue} from "./plan-value";
 
 interface Props {
     open: boolean;
@@ -51,12 +45,14 @@ export function UpgradeDialog({open, onOpenChange}: Props) {
                             <span className="text-xs text-muted-foreground">{PRICES.premium}</span>
                         </span>
                     </div>
-                    {FEATURES.map((f) => (
+                    {PLAN_FEATURES.map((f) => (
                         <div key={f.label} className="grid grid-cols-[1fr_6rem_6rem] items-center border-t px-3 py-2">
                             <span>{f.label}</span>
-                            <span className="text-center text-muted-foreground">{f.free}</span>
+                            <span className="flex justify-center text-muted-foreground">
+                                <PlanValue value={f.free}/>
+                            </span>
                             <span className="flex justify-center font-medium">
-                                {f.premium === "✓" ? <Check className="size-4"/> : f.premium}
+                                <PlanValue value={f.premium}/>
                             </span>
                         </div>
                     ))}
