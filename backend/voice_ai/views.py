@@ -30,14 +30,14 @@ class JeremyTipView(APIView):
     serializer_class = JeremyTipRequestSerializer
 
     def post(self, request):
-        #if not is_flag_active("jeremy_ai", request.user):
-         #   return Response({"code": "jeremy_disabled"}, status=503)
-        #if request.user.ai_consent_at is None:
-         #   return Response({"code": "ai_consent_required"}, status=403)
+        if not is_flag_active("jeremy_ai", request.user):
+            return Response({"code": "jeremy_disabled"}, status=503)
+        if request.user.ai_consent_at is None:
+            return Response({"code": "ai_consent_required"}, status=403)
 
-        #usage = get_usage(request.user)
-        #if usage["remaining"] <= 0:
-            #return Response({"code": "ai_quota_exceeded", "params": usage}, status=429)
+        usage = get_usage(request.user)
+        if usage["remaining"] <= 0:
+            return Response({"code": "ai_quota_exceeded", "params": usage}, status=429)
 
         serializer = JeremyTipRequestSerializer(data=request.data)
         if not serializer.is_valid():
