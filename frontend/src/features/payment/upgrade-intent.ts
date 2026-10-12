@@ -6,6 +6,7 @@ export function setUpgradeIntent(): void {
     try {
         sessionStorage.setItem(KEY, String(Date.now()));
     } catch {
+        // sessionStorage nicht verfügbar
     }
 }
 
@@ -22,5 +23,6 @@ export function clearUpgradeIntent(): void {
     try {
         sessionStorage.removeItem(KEY);
     } catch {
+        // sessionStorage nicht verfügbar
     }
 }
