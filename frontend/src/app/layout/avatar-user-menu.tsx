@@ -9,12 +9,14 @@ import {
     DropdownMenuTrigger,
 
 } from "@/ui-components/ui/dropdown-menu";
-import {Avatar, AvatarFallback, AvatarImage} from "@/ui-components/ui/avatar.tsx";
+import {Avatar, AvatarFallback} from "@/ui-components/ui/avatar.tsx";
 import {Button} from "@/ui-components/ui/button.tsx";
 import {UseLogout} from "@/features/auth/useLogout.ts";
 import {useNavigate} from "react-router";
 import {useSubscription} from "@/features/payment/use-subscription";
 import {PlanBadge} from "@/features/payment/plan-badge";
+import {useMe} from "@/features/profile/use-me.ts";
+import {JeremyAvatarImage} from "@/features/jeremyai/jeremy-avatar-image";
 
 
 export function AvatarUserMenu() {
@@ -23,6 +25,7 @@ export function AvatarUserMenu() {
     const navigate = useNavigate();
     const isAuthenticated = state.status === "authenticated";
     const {data: sub} = useSubscription(false, isAuthenticated)
+    const {data: me} = useMe();
 
     if (!isAuthenticated){
         return null
@@ -36,8 +39,8 @@ export function AvatarUserMenu() {
             <DropdownMenuTrigger
                 render={
                     <Button variant="ghost" size="icon" className="rounded-full" aria-label="Benutzermenü">
-                        <Avatar>
-                            <AvatarImage src="/JeremyPB.jpg" alt=""/>
+                        <Avatar className="overflow-hidden">
+                            <JeremyAvatarImage mode={me?.jeremy_mode}/>
                             <AvatarFallback>{state.user.email.slice(0, 2).toUpperCase()}</AvatarFallback>
                         </Avatar>
                     </Button>
