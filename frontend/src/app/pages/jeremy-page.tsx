@@ -14,7 +14,9 @@ import {Button} from "@/ui-components/ui/button";
 import {Badge} from "@/ui-components/ui/badge";
 import {useFlags} from "@/features/feature-flags/use-flags";
 import {useMe} from "@/features/profile/use-me.ts";
-import {useAskJeremy} from "@/features/jeremyai/use-jeremy";
+import {useAiUsage, useAskJeremy} from "@/features/jeremyai/use-jeremy";
+import {UsageMeter} from "@/features/jeremyai/usage-meter";
+import {UpgradeButton} from "@/features/payment/upgrade-button";
 
 type ChatMessage = {
     id: string;
@@ -28,6 +30,7 @@ const ERROR_TEXT: Record<string, string> = {
     ai_consent_required: "Du hast der Nutzung von Jeremy nicht zugestimmt.",
     jeremy_disabled: "Jeremy ist gerade nicht verfügbar.",
     ai_busy: "Jeremy ist gerade überlastet. Versuch es in ein paar Sekunden nochmal.",
+    ai_quota_exceeded: "Du hast dein Tageslimit erreicht",
 };
 
 function errorCode(err: unknown): string {
@@ -53,8 +56,11 @@ export function JeremyPage() {
     const loading = flagsLoading || meLoading;
     const enabled = flags?.jeremy_ai ?? false;
     const consented = !!me?.ai_consent_at;
-    const canChat = !loading && enabled && consented;
+    const {data: usage} = useAiUsage(enabled && consented);
+    const quotaReached = usage ? usage.remaining <= 0 : false;
+    const canChat = !loading && enabled && consented && !quotaReached;
     const satire = me?.jeremy_mode === "satire";
+
 
     const update = (id: string, patch: Partial<ChatMessage>) =>
         setMessages((m) => m.map((msg) => (msg.id === id ? {...msg, ...patch} : msg)));
@@ -90,6 +96,10 @@ export function JeremyPage() {
         });
     };
 
+    const placeholder = quotaReached
+        ? "Tageslimit erreicht"
+        : canChat ? "Frag Jeremy…" : "Jeremy ist deaktiviert";
+
     return (
         <div className="mx-auto flex h-[calc(100svh-5rem)] max-w-2xl flex-col gap-3 p-4">
             <div className="flex items-center justify-between">
@@ -100,6 +110,13 @@ export function JeremyPage() {
                     </Badge>
                 )}
             </div>
+
+            {enabled && consented && usage && (
+                <UsageMeter
+                    usage={usage}
+                    action={<UpgradeButton variant="link" size="sm" label="Mehr mit Premium" className="h-auto p-0 text-xs"/>}
+                />
+            )}
             {/* ---------- Verlauf ---------- */}
             <MessageScrollerProvider autoScroll defaultScrollPosition="last-anchor">
                 <MessageScroller className="flex-1 rounded-lg border">
@@ -164,12 +181,28 @@ export function JeremyPage() {
                 </p>
             )}
 
+            {!loading && enabled && consented && quotaReached && usage && (
+                <div className="flex flex-col items-center gap-2 rounded-lg border p-4 text-center">
+                    <p className="text-sm">
+                        Du hast heute alle {usage.limit} Fragen genutzt. Ab Mitternacht geht's weiter.
+                    </p>
+                    {usage.plan === "free" && (
+                        <>
+                            <p className="text-sm text-muted-foreground">
+                                Mit Premium kannst du Jeremy 10 Fragen pro Tag stellen.
+                            </p>
+                            <UpgradeButton/>
+                        </>
+                    )}
+                </div>
+            )}
+
             {/* ---------- Eingabe ---------- */}
             <form onSubmit={send} className="flex gap-2">
                 <Input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder={canChat ? "Frag Jeremy…" : "Jeremy ist deaktiviert"}
+                    placeholder={placeholder}
                     disabled={!canChat || ask.isPending}
                     maxLength={500}
                     aria-label="Frage an Jeremy"

@@ -9,7 +9,7 @@ export function AiConsentCard({me}: {me: Person}) {
     const consented = me.ai_consent_at !== null;
 
     return (
-        <Card id="jeremy" className="scroll-mt-6">
+        <Card id="jeremy" className="scroll-mt-24">
             <CardHeader>
                 <CardTitle>JeremyAI</CardTitle>
                 <CardDescription>
