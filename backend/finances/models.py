@@ -111,9 +111,16 @@ class CostItem(models.Model):
     @property
     def current_amount(self):
         today = date.today()
-        active_entry = ItemEntry.objects.filter(cost_item=self, valid_from__lte=today).filter(
+        active_entry = CostItem.objects.filter(
+            history_group_id=self.history_group_id,
+            valid_from__lte=today
+        ).filter(
             models.Q(valid_until__isnull=True) | models.Q(valid_until__gte=today)
-        ).order_by('-valid_from').first()
+        ).order_by(
+            '-valid_from',
+            models.F('valid_until').desc(nulls_first=True)
+        ).first()
+
         if active_entry:
             return active_entry.amount
         return self.amount
@@ -121,47 +128,6 @@ class CostItem(models.Model):
     def __str__(self):
         status = "Aktiv" if not self.valid_until else f"Bis {self.valid_until}"
         return f"{self.name} ({self.amount} | {status})"
-
-
-class ItemEntry(models.Model):
-    item_entry_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    cost_item = models.ForeignKey(CostItem, on_delete=models.CASCADE, related_name='price_history')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    valid_from = models.DateField()
-    valid_until = models.DateField(null=True, blank=True)
-    note = models.TextField(null=True, blank=True)
-
-    class Meta:
-        constraints = [
-            models.CheckConstraint(condition=~models.Q(valid_until__lt=models.F('valid_from')), name='itementry_valid_date_range')
-        ]
-
-    def clean(self):
-        super().clean()
-
-        if self.valid_until and self.valid_until < self.valid_from:
-            raise ValidationError('valid_until darf nicht vor valid_from liegen.')
-
-        overlaps = ItemEntry.objects.filter(cost_item=self.cost_item)
-        if self.pk:
-            overlaps = overlaps.exclude(pk=self.pk)
-
-        if self.valid_until:
-            overlaps = overlaps.filter(valid_from__lt=self.valid_until)
-            if overlaps.exists():
-                raise ValidationError('Preisspannen für denselben Vertrag dürfen sich nicht überlappen.')
-        else:
-            overlaps = overlaps.filter(valid_from__lte=self.valid_from)
-            if overlaps.filter(valid_until__isnull=True).exists() or overlaps.filter(valid_until__gte=self.valid_from).exists():
-                raise ValidationError('Es gibt bereits einen aktiven Preisbereich für diesen Vertrag.')
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
-
-    def __str__(self):
-        status = 'Aktiv' if not self.valid_until else f'Bis {self.valid_until}'
-        return f'{self.cost_item.name}: {self.amount} ({status})'
 
 
 class CostShare(models.Model):

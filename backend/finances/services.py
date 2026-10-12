@@ -15,10 +15,11 @@ from django.db.models import Prefetch
 
 def get_price_for_date(cost_item, target_date: date):
     entry = (
-        cost_item.price_history
+        CostItem.objects
+        .filter(history_group_id=cost_item.history_group_id)
         .filter(valid_from__lte=target_date)
         .filter(Q(valid_until__isnull=True) | Q(valid_until__gte=target_date))
-        .order_by("-valid_from")
+        .order_by("-valid_from", F('valid_until').desc(nulls_first=True)) # Tie-Breaker nicht vergessen!
         .first()
     )
 
