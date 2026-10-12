@@ -12,6 +12,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from google.genai import errors as genai_errors
+from .quota import get_usage, record_usage
 
 from feature_flags.services import is_flag_active
 
@@ -63,6 +64,9 @@ def jeremy_tip(request):
         return Response({"code": "jeremy_disabled"}, status=503)
     if request.user.ai_consent_at is None:
         return Response({"code": "ai_consent_required"}, status=403)
+    usage = get_usage(request.user)
+    if usage["remaining"] <= 0:
+        return Response({"code": "ai_quota_exceeded", "params": usage}, status=429)
     try:
         logger.info("--- STARTE JEREMY API ---")
         user_question = request.data.get("question", "Wie investiere ich mein Geld?")
@@ -117,6 +121,8 @@ def jeremy_tip(request):
 
         logger.info("Fish Audio MP3 erfolgreich empfangen. Sende Response an Client.")
 
+        record_usage(request.user)
+
         response = HttpResponse(tts_response.content, content_type="audio/mpeg")
         response["X-Jeremy-Text"] = quote(jeremy_text)
         response["Access-Control-Expose-Headers"] = "X-Jeremy-Text"
@@ -133,3 +139,8 @@ def jeremy_tip(request):
     except Exception as e:
         logger.critical("Kritischer Fehler in der jeremy_tip View: %s", str(e), exc_info=True)
         return Response({"code": "server_error"}, status=500)
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def ai_usage(request):
+    return Response(get_usage(request.user))
