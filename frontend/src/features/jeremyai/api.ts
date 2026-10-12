@@ -24,3 +24,16 @@ export async function askJeremy(question: string): Promise<JeremyAnswer> {
         throw await parseBlobError(err);
     }
 }
+
+export interface AiUsage {
+    plan: "free" | "premium";
+    limit: number;
+    used: number;
+    remaining: number;
+    resets_at: string;
+}
+
+export async function getAiUsage(): Promise<AiUsage> {
+    const res = await apiClient.get<AiUsage>("voice-ai/usage/");
+    return res.data;
+}
