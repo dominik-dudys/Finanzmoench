@@ -33,7 +33,7 @@ export function AiConsentCard({me}: {me: Person}) {
                                     // Beim Widerrufen auch Satire ausschalten – muss bei erneuter Aktivierung neu gewählt werden
                                     : {ai_consent: false, jeremy_mode: "serious"},
                             )
-                        }                    />
+                        }/>
                 </div>
                 {consented && (
                     <p className="text-sm text-muted-foreground">
