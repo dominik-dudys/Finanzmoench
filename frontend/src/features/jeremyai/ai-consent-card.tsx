@@ -26,8 +26,14 @@ export function AiConsentCard({me}: {me: Person}) {
                         id="ai-consent"
                         checked={consented}
                         disabled={updateMe.isPending}
-                        onCheckedChange={(checked) => updateMe.mutate({ai_consent: checked})}
-                    />
+                        onCheckedChange={(checked) =>
+                            updateMe.mutate(
+                                checked
+                                    ? {ai_consent: true}
+                                    // Beim Widerrufen auch Satire ausschalten – muss bei erneuter Aktivierung neu gewählt werden
+                                    : {ai_consent: false, jeremy_mode: "serious"},
+                            )
+                        }/>
                 </div>
                 {consented && (
                     <p className="text-sm text-muted-foreground">

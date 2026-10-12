@@ -1,5 +1,4 @@
 import {useEffect, useRef, useState} from "react";
-import {Link} from "react-router";
 import {useQueryClient} from "@tanstack/react-query";
 import {SendHorizontal} from "lucide-react";
 import {Avatar, AvatarFallback} from "@/ui-components/ui/avatar";
@@ -11,12 +10,17 @@ import {
 } from "@/ui-components/ui/message-scroller";
 import {Input} from "@/ui-components/ui/input";
 import {Button} from "@/ui-components/ui/button";
-import {Badge} from "@/ui-components/ui/badge";
 import {useFlags} from "@/features/feature-flags/use-flags";
-import {useMe} from "@/features/profile/use-me.ts";
+import {useMe, useUpdateMe} from "@/features/profile/use-me.ts";
 import {useAiUsage, useAskJeremy} from "@/features/jeremyai/use-jeremy";
 import {UsageMeter} from "@/features/jeremyai/usage-meter";
 import {UpgradeButton} from "@/features/payment/upgrade-button";
+import {toast} from "sonner";
+import {Switch} from "@/ui-components/ui/switch";
+import {Label} from "@/ui-components/ui/label";
+import {cn} from "@/lib/utils";
+import {AiConsentDialog} from "@/features/jeremyai/ai-consent-dialog";
+
 import {JeremyAvatarImage} from "@/features/jeremyai/jeremy-avatar-image";
 
 type ChatMessage = {
@@ -43,9 +47,17 @@ export function JeremyPage() {
     const {data: flags, isLoading: flagsLoading} = useFlags();
     const {data: me, isLoading: meLoading} = useMe();
     const ask = useAskJeremy();
+    const updateMe = useUpdateMe();
+
+    const toggleSatire = (checked: boolean) =>
+        updateMe.mutate(
+            {jeremy_mode: checked ? "satire" : "serious"},
+            {onError: () => toast.error("Modus konnte nicht geändert werden.")},
+        );
 
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState("");
+    const [consentOpen, setConsentOpen] = useState(false);
 
     // Blob-URLs beim Verlassen der Seite freigeben
     const audioUrls = useRef<string[]>([]);
@@ -99,16 +111,29 @@ export function JeremyPage() {
 
     const placeholder = quotaReached
         ? "Tageslimit erreicht"
-        : canChat ? "Frag Jeremy…" : "Jeremy ist deaktiviert";
+        : canChat ? "Frag Jeremy…"
+            : enabled && !consented ? "Erst Jeremy aktivieren" : "Jeremy ist deaktiviert";
 
     return (
         <div className="mx-auto flex h-[calc(100svh-5rem)] max-w-2xl flex-col gap-3 p-4">
             <div className="flex items-center justify-between">
                 <h1 className="text-lg font-semibold">JeremyAI</h1>
                 {consented && (
-                    <Badge variant={satire ? "destructive" : "secondary"}>
-                        {satire ? "Satire" : "Seriös"}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                        <Label
+                            htmlFor="jeremy-satire-toggle"
+                            className={cn("text-sm", satire ? "font-semibold text-destructive" : "text-muted-foreground")}
+                        >
+                            Satire-Modus
+                        </Label>
+                        <Switch
+                            id="jeremy-satire-toggle"
+                            checked={satire}
+                            disabled={updateMe.isPending}
+                            onCheckedChange={toggleSatire}
+                            className="data-checked:bg-destructive"
+                        />
+                    </div>
                 )}
             </div>
 
@@ -137,8 +162,9 @@ export function JeremyPage() {
                                     <Message align={msg.role === "user" ? "end" : "start"}>
                                         {msg.role === "jeremy" && (
                                             <MessageAvatar>
-                                                <Avatar>
-                                                    <JeremyAvatarImage mode={me?.jeremy_mode} alt="Jeremy"/>                                                    <AvatarFallback>Mönch</AvatarFallback>
+                                                <Avatar className="overflow-hidden">
+                                                    <JeremyAvatarImage mode={me?.jeremy_mode} alt="Jeremy"/>
+                                                    <AvatarFallback>Mönch</AvatarFallback>
                                                 </Avatar>
                                             </MessageAvatar>
                                         )}
@@ -175,11 +201,14 @@ export function JeremyPage() {
                 </p>
             )}
             {!loading && enabled && !consented && (
-                <p className="text-center text-sm text-muted-foreground">
-                    Um Jeremy zu nutzen, aktiviere ihn in den{" "}
-                    <Link to="/einstellungen#jeremy" className="underline">Einstellungen</Link>.
-                </p>
+                <div className="flex flex-col items-center gap-2 rounded-lg border p-4 text-center">
+                    <p className="text-sm text-muted-foreground">
+                        Jeremy braucht deine Einwilligung, bevor es losgehen kann.
+                    </p>
+                    <Button onClick={() => setConsentOpen(true)}>Jeremy aktivieren</Button>
+                </div>
             )}
+            <AiConsentDialog open={consentOpen} onOpenChange={setConsentOpen}/>
 
             {!loading && enabled && consented && quotaReached && usage && (
                 <div className="flex flex-col items-center gap-2 rounded-lg border p-4 text-center">
@@ -211,7 +240,7 @@ export function JeremyPage() {
                     <SendHorizontal/>
                 </Button>
             </form>
-            <p className="text-center text-xs text-muted-foreground">
+            <p className={cn("text-center text-xs", satire ? "font-medium text-destructive" : "text-muted-foreground")}>
                 {satire
                     ? "Satire-Modus: nicht ernst gemeint – keine Finanzberatung."
                     : "Allgemeine Tipps – keine Finanzberatung."}
