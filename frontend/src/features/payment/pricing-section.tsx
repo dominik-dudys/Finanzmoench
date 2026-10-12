@@ -7,6 +7,7 @@ import {cn} from "@/lib/utils";
 import {PLAN_FEATURES, PRICES} from "./plans";
 import {useSubscription} from "./use-subscription";
 import {UpgradeButton} from "./upgrade-button";
+import {setUpgradeIntent} from "./upgrade-intent";
 
 type Plan = "free" | "premium";
 
@@ -80,11 +81,11 @@ export function PricingSection({authenticated}: {authenticated: boolean}) {
 
                             {!authenticated && (
                                 <div className="flex flex-col gap-2">
-                                    <Link to="/register" className={buttonVariants()}>
+                                    <Link to="/register" className={buttonVariants()} onClick={setUpgradeIntent}>
                                         Registrieren & upgraden
                                     </Link>
                                     <p className="text-center text-xs text-muted-foreground">
-                                        Upgrade nach der Registrierung mit einem Klick. Jederzeit kündbar.
+                                        Nach der Registrierung geht's direkt weiter zum Upgrade. Jederzeit kündbar.
                                     </p>
                                 </div>
                             )}
