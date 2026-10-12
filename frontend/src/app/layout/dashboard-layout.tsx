@@ -3,6 +3,7 @@ import {buttonVariants} from "@/ui-components/ui/button.tsx";
 import {AvatarUserMenu} from "@/app/layout/avatar-user-menu.tsx";
 import {FooterComponent} from "@/shared/components/footer-component.tsx";
 import {UpgradeButton} from "@/features/payment/upgrade-button";
+import {PendingUpgradeDialog} from "@/features/payment/pending-upgrade-dialog";
 
 const NAV_ITEMS = [
     {to: "/dashboard", label: "Dashboard"},
@@ -51,7 +52,7 @@ export function DashboardLayout() {
             <main className="flex-1">
                 <Outlet/>
             </main>
-
+            <PendingUpgradeDialog/>
             <FooterComponent/>
         </div>
     )

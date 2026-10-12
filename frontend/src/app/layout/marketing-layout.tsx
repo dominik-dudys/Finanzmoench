@@ -22,6 +22,9 @@ export function MarketingLayout() {
                         <Button variant="outline" className="text-gray-600 border-transparent h-10">
                             <a href="/#funktioniert">So funktioniert es</a>
                         </Button>
+                        <Button variant="outline" className="text-gray-600 border-transparent h-10">
+                            <a href="/#preise">Preise</a>
+                        </Button>
                     </div>
 
                     {/*Rechte Seite*/}
