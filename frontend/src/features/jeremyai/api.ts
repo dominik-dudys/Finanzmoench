@@ -34,6 +34,6 @@ export interface AiUsage {
 }
 
 export async function getAiUsage(): Promise<AiUsage> {
-    const res = await apiClient.get<AiUsage>("voice-ai/usage/");
+    const res = await apiClient.get<AiUsage>("voice-ai/ai-usage/");
     return res.data;
 }
