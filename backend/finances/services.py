@@ -7,7 +7,7 @@ import datetime
 import calendar
 from datetime import date
 from django.shortcuts import get_object_or_404
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, F
 from decimal import Decimal, ROUND_HALF_UP
 from django.db.models import Prefetch
 
@@ -15,10 +15,11 @@ from django.db.models import Prefetch
 
 def get_price_for_date(cost_item, target_date: date):
     entry = (
-        cost_item.price_history
+        CostItem.objects
+        .filter(history_group_id=cost_item.history_group_id)
         .filter(valid_from__lte=target_date)
         .filter(Q(valid_until__isnull=True) | Q(valid_until__gte=target_date))
-        .order_by("-valid_from")
+        .order_by("-valid_from", F('valid_until').desc(nulls_first=True)) # Tie-Breaker nicht vergessen!
         .first()
     )
 
@@ -272,7 +273,7 @@ def calculate_dashboard_stats(household, month: int, year: int) -> dict:
         valid_from__lte=last_day
     ).filter(
         Q(valid_until__isnull=True) | Q(valid_until__gte=first_day)
-    ).order_by('history_group_id', '-valid_from')
+    ).order_by('history_group_id', '-valid_from', F('valid_until').desc(nulls_first=True))
 
     seen_income_groups = set()
     active_incomes = []
@@ -286,7 +287,7 @@ def calculate_dashboard_stats(household, month: int, year: int) -> dict:
         valid_from__lte=last_day
     ).filter(
         Q(valid_until__isnull=True) | Q(valid_until__gte=first_day)
-    ).prefetch_related('shares', 'position_category').order_by('history_group_id', '-valid_from')
+    ).prefetch_related('shares', 'position_category').order_by('history_group_id', '-valid_from', F('valid_until').desc(nulls_first=True))
 
     # Entfernen veralteter Duplikate
     seen_cost_groups = set()
