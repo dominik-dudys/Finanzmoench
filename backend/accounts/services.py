@@ -1,6 +1,8 @@
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from django.utils import timezone
 from accounts.models import Person
+from finances.models import CostItem, CostShare
+from django.db import transaction
 
 
 def generate_dsgvo_export_data(user: Person) -> dict:
@@ -139,3 +141,115 @@ def generate_dsgvo_export_data(user: Person) -> dict:
             "chat_sessions": ai_chats_data,
         },
     }
+
+
+def rebalance_household_costs_on_member_exit(person) -> None:
+    """
+    Passt alle aktiven Kostenposten eines Haushalts an, wenn ein Mitglied austritt oder gelöscht wird.
+    """
+    household = person.household
+    if not household:
+        return
+
+    today = timezone.now().date()
+    remaining_members = list(household.person_set.exclude(pk=person.pk))
+
+    if not remaining_members:
+        return
+
+    active_items = CostItem.objects.filter(
+        household=household,
+        valid_until__isnull=True,
+        shares__person=person
+    ).prefetch_related('shares__person').distinct()
+
+    for item in active_items:
+        all_shares = list(item.shares.all())
+        remaining_shares = [s for s in all_shares if s.person_id != person.person_id]
+
+        item.valid_until = today
+        item.save(update_fields=['valid_until'])
+
+        if not remaining_shares:
+            continue
+
+        new_item = CostItem.objects.create(
+            household=item.household,
+            history_group_id=item.history_group_id,
+            position_category=item.position_category,
+            name=item.name,
+            description=item.description,
+            interval=item.interval,
+            amount=item.amount,
+            start_date=item.start_date,
+            end_date=item.end_date,
+            valid_from=today,
+            valid_until=None,
+        )
+
+        total_remaining_pct = sum(s.percentage for s in remaining_shares)
+        total_assigned = Decimal('0.00')
+        count = len(remaining_shares)
+
+        for i, old_share in enumerate(remaining_shares):
+            if i < count - 1:
+                if total_remaining_pct > Decimal('0.00'):
+                    new_pct = (old_share.percentage / total_remaining_pct * Decimal('100.00')).quantize(
+                        Decimal('0.01'), rounding=ROUND_HALF_UP
+                    )
+                else:
+                    new_pct = (Decimal('100.00') / Decimal(count)).quantize(
+                        Decimal('0.01'), rounding=ROUND_HALF_UP
+                    )
+            else:
+                new_pct = Decimal('100.00') - total_assigned
+
+            CostShare.objects.create(
+                cost_item=new_item,
+                person=old_share.person,
+                percentage=new_pct
+            )
+            total_assigned += new_pct
+
+
+@transaction.atomic
+def delete_user_account_dsgvo(user) -> None:
+    """
+    Löscht den Nutzer und alle seine personenbezogenen Daten restlos gemäß Art. 17 DSGVO.
+    Bereinigt Einkommen, KI-Chats, eigene Kostenposten, ungenutzte Kategorien und den Haushalt.
+    """
+    household = user.household
+
+    if household:
+        other_members = household.person_set.exclude(pk=user.pk)
+
+        if other_members.exists():
+            # Es bleiben noch andere Personen im Haushalt zurück
+
+            # Gemeinsame aktive Kosten auf die verbleibenden Mitbewohner (100%) umlegen
+            rebalance_household_costs_on_member_exit(user)
+
+            # löscht Kostenposten die einzig dem User gehörten
+            user_only_cost_items = CostItem.objects.filter(
+                household=household,
+                shares__person=user
+            ).exclude(
+                shares__person__in=other_members
+            ).distinct()
+            user_only_cost_items.delete()
+
+            user.delete()
+
+            for category in household.position_categories.filter(is_standard=False):
+                if not category.income_set.exists() and not category.costitem_set.exists():
+                    category.delete()
+
+        else:
+            # Der User ist die einzige/letzte Person im Haushalt
+            household.costitem_set.all().delete()
+            user.delete()
+            household.delete()
+
+    else:
+        # User ist in gar keinem Haushalt
+        user.delete()
