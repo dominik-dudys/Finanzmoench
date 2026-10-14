@@ -59,8 +59,8 @@ export function HomePage() {
                         <span className="text-muted-foreground">54,90€</span>
                     </div>
                     <div className="flex items-center justify-between py-3">
-                        <span className="font-semibold">Miete</span>
-                        <span className="text-muted-foreground">690,00€</span>
+                        <span className="font-semibold">Freizeit</span>
+                        <span className="text-muted-foreground">199,99€</span>
                     </div>
                 </CardContent>
             </Card>
