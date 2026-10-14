@@ -9,6 +9,7 @@ import {PremiumCard} from "@/features/payment/premium-card";
 import {useProviderAccounts} from "@/features/security/use-security.ts";
 import {useAuthenticators} from "@/features/security/use-mfa.ts";
 import {useSubscription} from "@/features/payment/use-subscription.ts";
+import {DataExportCard, DeleteAccountCard} from "@/features/privacy";
 
 export function SettingsPage() {
     const {data: me, isLoading} = useMe();
@@ -41,6 +42,16 @@ export function SettingsPage() {
 
             <h2 className="text-lg font-semibold">Abo</h2>
             <PremiumCard/>
+
+            <h2 className="text-lg font-semibold">Datenschutz</h2>
+            <DataExportCard/>
+
+            <DeleteAccountCard
+                hasPassword={me.has_password}
+                hasActiveSubscription={
+                    !!subscription.data?.is_premium && !subscription.data.cancel_at_period_end
+                }
+            />
         </div>
     );
 }
