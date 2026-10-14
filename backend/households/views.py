@@ -1,15 +1,22 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework import serializers
+from rest_framework import status, serializers
 from django.core.exceptions import ValidationError
-from .models import Household, PositionCategory
-from .serializers import HouseholdSerializer, PositionCategorySerializer
+from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
+
 from accounts.models import Person
+from .models import Household, PositionCategory, HouseholdJoinRequest
+from .serializers import (
+    HouseholdSerializer,
+    PositionCategorySerializer,
+    HouseholdJoinRequestSerializer,
+    RespondJoinRequestSerializer
+)
 from .services import (
     create_household_for_user,
-    join_existing_household,
+    request_to_join_household,
+    respond_to_join_request,
     update_household,
     leave_household,
     delete_household,
@@ -17,15 +24,11 @@ from .services import (
     update_category,
     delete_category_safe
 )
-from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter
-from drf_spectacular.types import OpenApiTypes
 
 
-# Create your views here.
 class CreateHouseholdView(APIView):
     @extend_schema(request=HouseholdSerializer, responses=HouseholdSerializer)
     def post(self, request):
-
         if request.user.household:
             return Response(
                 {"error": "Du bist bereits Teil eines Haushalts. Bitte verlasse diesen zuerst, um einen neuen zu gründen."},
@@ -33,81 +36,152 @@ class CreateHouseholdView(APIView):
             )
 
         serializer = HouseholdSerializer(data=request.data)
-
         if serializer.is_valid():
-            household = create_household_for_user(request.user, serializer.validated_data)
-
-            return Response(
-                HouseholdSerializer(household).data,
-                status=status.HTTP_201_CREATED
-            )
+            try:
+                household = create_household_for_user(request.user, serializer.validated_data)
+                return Response(
+                    HouseholdSerializer(household).data,
+                    status=status.HTTP_201_CREATED
+                )
+            except ValidationError as e:
+                return Response({"error": getattr(e, 'message', str(e))}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class JoinHouseholdView(APIView):
     @extend_schema(
+        summary="Beitrittsanfrage an einen Haushalt senden",
         request=inline_serializer(
             name='JoinHouseholdRequest',
             fields={'household_id': serializers.UUIDField()}
-        )
+        ),
+        responses={201: HouseholdJoinRequestSerializer}
     )
-
     def post(self, request):
-
         if request.user.household:
-                    return Response(
-                        {"error": "Du bist bereits Teil eines Haushalts. Bitte verlasse diesen zuerst, um einem neuen beizutreten."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+            return Response(
+                {"error": "Du bist bereits Teil eines Haushalts. Bitte verlasse diesen zuerst, um einem neuen beizutreten."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         household_id = request.data.get('household_id')
-
         if not household_id:
             return Response({"error": "Bitte eine household_id angeben."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            household = join_existing_household(request.user, household_id)
-            return Response({
-                "message": f"Du bist dem Haushalt '{household.name}' erfolgreich beigetreten.",
-                "household": HouseholdSerializer(household).data
-                }, status=status.HTTP_200_OK)
+            join_request = request_to_join_household(person=request.user, household_id=household_id)
+            return Response(
+                {
+                    "message": f"Beitrittsanfrage an '{join_request.household.name}' wurde gesendet und wartet auf Freigabe durch ein Mitglied.",
+                    "join_request": HouseholdJoinRequestSerializer(join_request).data
+                },
+                status=status.HTTP_201_CREATED
+            )
+        except ValidationError as e:
+            msg = getattr(e, 'message', str(e))
+            status_code = status.HTTP_404_NOT_FOUND if "existiert nicht" in msg else status.HTTP_400_BAD_REQUEST
+            return Response({"error": msg}, status=status_code)
 
-        except Household.DoesNotExist:
-            return Response({"error": "Dieser Haushalt existisert nicht."}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({"error": "Ungültiges Format für die Haushalts-ID."}, status=status.HTTP_400_BAD_REQUEST)
+
+class ListHouseholdJoinRequestsView(APIView):
+    @extend_schema(
+        summary="Offene Beitrittsanfragen für den eigenen Haushalt abrufen",
+        responses=HouseholdJoinRequestSerializer(many=True)
+    )
+    def get(self, request):
+        household = request.user.household
+        if not household:
+            return Response([], status=status.HTTP_200_OK)
+
+        requests_qs = HouseholdJoinRequest.objects.filter(
+            household=household,
+            status=HouseholdJoinRequest.StatusChoices.PENDING
+        ).select_related('person', 'household')
+
+        return Response(
+            HouseholdJoinRequestSerializer(requests_qs, many=True).data,
+            status=status.HTTP_200_OK
+        )
+
+
+class MyJoinRequestsView(APIView):
+    @extend_schema(
+        summary="Eigene gesendete Beitrittsanfragen abrufen",
+        responses=HouseholdJoinRequestSerializer(many=True)
+    )
+    def get(self, request):
+        requests_qs = HouseholdJoinRequest.objects.filter(
+            person=request.user
+        ).select_related('person', 'household')
+
+        return Response(
+            HouseholdJoinRequestSerializer(requests_qs, many=True).data,
+            status=status.HTTP_200_OK
+        )
+
+
+class RespondHouseholdJoinRequestView(APIView):
+    @extend_schema(
+        summary="Beitrittsanfrage annehmen oder ablehnen",
+        request=RespondJoinRequestSerializer,
+        responses=HouseholdJoinRequestSerializer,
+        parameters=[
+            OpenApiParameter(name='request_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH)
+        ]
+    )
+    def post(self, request, request_id):
+        if not request.user.household:
+            return Response({"error": "Du gehörst aktuell keinem Haushalt an."}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = RespondJoinRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        approve = serializer.validated_data['approve']
+
+        try:
+            join_request = respond_to_join_request(
+                responder=request.user,
+                request_id=request_id,
+                approve=approve
+            )
+            action_text = "angenommen" if approve else "abgelehnt"
+            return Response(
+                {
+                    "message": f"Die Beitrittsanfrage von {join_request.person.first_name} wurde {action_text}.",
+                    "join_request": HouseholdJoinRequestSerializer(join_request).data
+                },
+                status=status.HTTP_200_OK
+            )
+        except ValidationError as e:
+            return Response({"error": getattr(e, 'message', str(e))}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class MyHouseholdView(APIView):
     @extend_schema(responses=HouseholdSerializer)
     def get(self, request):
         household = request.user.household
-
         if not household:
             return Response(None, status=status.HTTP_200_OK)
-
 
         data = HouseholdSerializer(household).data
         data['member_count'] = Person.objects.filter(household=household).count()
         return Response(data, status=status.HTTP_200_OK)
 
+
 class UpdateHouseholdView(APIView):
     @extend_schema(request=HouseholdSerializer, responses=HouseholdSerializer)
     def patch(self, request):
         household = request.user.household
-
         if not household:
             return Response({"error": "Du bist aktuell in keinem Haushalt."}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = HouseholdSerializer(household, data=request.data, partial=True)
-
         if serializer.is_valid():
             updated_household = update_household(
                 household=household,
                 update_data=serializer.validated_data
             )
-
             return Response(HouseholdSerializer(updated_household).data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -121,11 +195,23 @@ class LeaveHouseholdView(APIView):
         )
     )
     def post(self, request):
-
-        if not request.user.household:
+        household = request.user.household
+        if not household:
             return Response({"error": "Du bist aktuell in keinem Haushalt."}, status=status.HTTP_400_BAD_REQUEST)
 
-        leave_household(person=request.user)
+        was_last_member = not household.person_set.exclude(pk=request.user.pk).exists()
+
+        try:
+            leave_household(person=request.user)
+        except ValidationError as e:
+            return Response({"error": getattr(e, 'message', str(e))}, status=status.HTTP_400_BAD_REQUEST)
+
+        if was_last_member:
+            return Response(
+                {"message": "Du hast den Haushalt verlassen. Da du das letzte Mitglied warst, wurde der Haushalt aufgelöst."},
+                status=status.HTTP_200_OK
+            )
+
         return Response({"message": "Du hast den Haushalt erfolgreich verlassen."}, status=status.HTTP_200_OK)
 
 
@@ -138,7 +224,6 @@ class DeleteHouseholdView(APIView):
     )
     def delete(self, request):
         household = request.user.household
-
         if not household:
             return Response({"error": "Du bist aktuell in keinem Haushalt."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -147,6 +232,17 @@ class DeleteHouseholdView(APIView):
 
 
 class ListHouseholdMembersView(APIView):
+    @extend_schema(
+        responses=inline_serializer(
+            name='HouseholdMemberList',
+            fields={
+                'person_id': serializers.UUIDField(),
+                'first_name': serializers.CharField(),
+                'last_name': serializers.CharField(),
+            },
+            many=True
+        )
+    )
     def get(self, request):
         if not request.user.household:
             return Response([])
@@ -156,12 +252,11 @@ class ListHouseholdMembersView(APIView):
             'first_name',
             'last_name'
         )
-
         return Response(list(members))
 
 
 class CreateCategoryView(APIView):
-    @extend_schema(request=PositionCategorySerializer)
+    @extend_schema(request=PositionCategorySerializer, responses=PositionCategorySerializer)
     def post(self, request):
         household = request.user.household
         if not household:
@@ -214,6 +309,7 @@ class CategoryDetailView(APIView):
 class UpdateCategoryView(APIView):
     @extend_schema(
         request=PositionCategorySerializer,
+        responses=PositionCategorySerializer,
         parameters=[OpenApiParameter(name='position_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH)]
     )
     def patch(self, request, position_id):

@@ -41,3 +41,11 @@ class PersonSerializer(serializers.ModelSerializer):
         elif consent is False:
             instance.ai_consent_at = None
         return super().update(instance, validated_data)
+
+
+class DsgvoDeleteAccountSerializer(serializers.Serializer):
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+        help_text="Das aktuelle Passwort des Nutzers zur Bestätigung."
+    )

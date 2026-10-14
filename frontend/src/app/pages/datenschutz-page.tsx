@@ -11,7 +11,6 @@ function Section({title, children}: {title: string; children: ReactNode}) {
     );
 }
 
-
 export function DatenschutzPage(){
     return(
         <div className="flex justify-center px-4 py-12">
@@ -28,7 +27,7 @@ export function DatenschutzPage(){
                     </Section>
 
                     <Section title="2. Hosting und Server-Logs">
-                        <p>Die Anwendung läuft auf einem Server bei OHV, Frankreich (Server in Polen, Warschau). Beim Aufruf werden
+                        <p>Die Anwendung läuft auf einem Server bei OVH, Frankreich (Server in Polen, Warschau). Beim Aufruf werden
                             technisch notwendige Daten (IP-Adresse, Zeitpunkt, angefragte Seite) verarbeitet,
                             um den Betrieb und die Sicherheit zu gewährleisten (Art. 6 Abs. 1 lit. f DSGVO).</p>
                     </Section>
@@ -54,25 +53,39 @@ export function DatenschutzPage(){
                     </Section>
 
                     <Section title="6. Finanzdaten">
-                        <p>Die von dir erfassten Verträge, Kosten und Kategorien speichern wir, um dir deine
-                            Fixkosten anzuzeigen. Diese Daten sind für alle Mitglieder deines Haushalts
-                            sichtbar.</p>
+                        <p>Die von dir erfassten Einkommen, Verträge, Kosten und Kategorien speichern wir, um dir
+                            deine Fixkosten und Kennzahlen anzuzeigen (Art. 6 Abs. 1 lit. b DSGVO). Kosten und
+                            Kategorien sind für alle Mitglieder deines Haushalts sichtbar.</p>
                     </Section>
 
                     <Section title="7. JeremyAI">
-                        <p>Fragen an JeremyAI werden zur Beantwortung an Google (Gemini) übermittelt, die
-                            Antwort zur Sprachausgabe an Fish Audio. Bitte gib dort keine persönlichen Daten
-                            ein.</p>
+                        <p>JeremyAI nutzt du nur mit deiner Einwilligung (Art. 6 Abs. 1 lit. a DSGVO), die du
+                            jederzeit in den Einstellungen widerrufen kannst. Deine Fragen werden zur Beantwortung
+                            an Google (Gemini) übermittelt, die Antwort zur Sprachausgabe an Fish Audio. Dabei können
+                            Daten in die USA übertragen werden. Bitte gib dort keine persönlichen Daten ein.</p>
+                        <p>Deine Chatverläufe speichern wir, damit Jeremy den Gesprächskontext kennt. Sie bleiben
+                            gespeichert, bis du den Chat oder dein Konto löschst. Zusätzlich zählen wir deine täglichen
+                            Anfragen, um das Nutzungslimit umzusetzen.</p>
                     </Section>
 
-                    <Section title="8. Speicherdauer">
+                    <Section title="8. Zahlungsabwicklung">
+                        <p>Für Premium nutzen wir den Zahlungsdienstleister Stripe. Deine Zahlungsdaten gibst du
+                            direkt bei Stripe ein, wir erhalten sie nicht. Wir speichern nur deine Stripe-Kunden- und
+                            Abo-Kennung sowie den Abo-Status (Art. 6 Abs. 1 lit. b DSGVO). Dabei können Daten in die
+                            USA übertragen werden. Es gelten zusätzlich die Datenschutzbestimmungen von Stripe.</p>
+                    </Section>
+
+                    <Section title="9. Speicherdauer">
                         <p>Wir speichern deine Daten, solange dein Konto besteht. Nach der Löschung des
                             Kontos werden sie entfernt.</p>
                     </Section>
 
-                    <Section title="9. Deine Rechte">
+                    <Section title="10. Deine Rechte">
                         <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der
-                            Verarbeitung, Datenübertragbarkeit und Widerspruch. </p>
+                            Verarbeitung, Datenübertragbarkeit und Widerspruch sowie auf Beschwerde bei einer
+                            Datenschutz-Aufsichtsbehörde.</p>
+                        <p>Deine Daten herunterladen und dein Konto löschen kannst du selbst unter{" "}
+                            <a href="/einstellungen#datenexport" className="underline">Einstellungen → Datenschutz</a>.</p>
                     </Section>
                 </CardContent>
             </Card>
