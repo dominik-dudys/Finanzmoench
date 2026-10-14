@@ -11,7 +11,10 @@ from .views import (
     CreateCategoryView,
     CategoryDetailView,
     UpdateCategoryView,
-    DeleteCategoryView
+    DeleteCategoryView,
+    ListHouseholdJoinRequestsView,
+    MyJoinRequestsView,
+    RespondHouseholdJoinRequestView,
 )
 
 urlpatterns = [
@@ -27,4 +30,7 @@ urlpatterns = [
     path('category-delete/<uuid:position_id>/', DeleteCategoryView.as_view(), name='category-delete'),
     path('categories-show/', ShowCategoriesView.as_view(), name='show-categories'),
     path('category-detail/<uuid:position_id>/', CategoryDetailView.as_view(), name='category-detail'),
+    path('join-requests/', ListHouseholdJoinRequestsView.as_view(), name='household-join-requests'),
+    path('my-join-requests/', MyJoinRequestsView.as_view(), name='my-join-requests'),
+    path('respond-join-requests/<uuid:request_id>/', RespondHouseholdJoinRequestView.as_view(), name='respond-join-request'),
 ]

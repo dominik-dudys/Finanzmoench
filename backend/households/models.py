@@ -3,6 +3,7 @@ import uuid
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.conf import settings
 
 
 class Household(models.Model):
@@ -61,3 +62,42 @@ def create_standard_categories(sender, instance, created, **kwargs):
             )
             for cat in standard_categories
         ])
+
+
+class HouseholdJoinRequest(models.Model):
+    class StatusChoices(models.TextChoices):
+        PENDING = 'pending', 'Ausstehend'
+        APPROVED = 'approved', 'Angenommen'
+        REJECTED = 'rejected', 'Abgelehnt'
+
+    request_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    household = models.ForeignKey(
+        'households.Household',
+        on_delete=models.CASCADE,
+        related_name='join_requests'
+    )
+    person = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='household_join_requests'
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=StatusChoices.choices,
+        default=StatusChoices.PENDING
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    responded_at = models.DateTimeField(null=True, blank=True)
+    responded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='handled_join_requests'
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.person} -> {self.household} ({self.status})"

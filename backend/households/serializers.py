@@ -1,6 +1,6 @@
 import re
 from rest_framework import serializers
-from .models import Household, PositionCategory
+from .models import Household, PositionCategory, HouseholdJoinRequest
 
 VALID_CURRENCIES = {'EUR', 'USD'}
 
@@ -49,3 +49,34 @@ class PositionCategorySerializer(serializers.ModelSerializer):
         if value and not re.match(r'^#[0-9A-Fa-f]{6}$', value):
             raise serializers.ValidationError("Farbcode muss im Format #RRGGBB sein.")
         return value
+
+
+class HouseholdJoinRequestSerializer(serializers.ModelSerializer):
+    person_id = serializers.UUIDField(source='person.person_id', read_only=True)
+    first_name = serializers.CharField(source='person.first_name', read_only=True)
+    last_name = serializers.CharField(source='person.last_name', read_only=True)
+    email = serializers.EmailField(source='person.email', read_only=True)
+    household_name = serializers.CharField(source='household.name', read_only=True)
+
+    class Meta:
+        model = HouseholdJoinRequest
+        fields = [
+            'request_id',
+            'household_id',
+            'household_name',
+            'person_id',
+            'first_name',
+            'last_name',
+            'email',
+            'status',
+            'created_at',
+            'responded_at',
+        ]
+        read_only_fields = fields
+
+
+class RespondJoinRequestSerializer(serializers.Serializer):
+    approve = serializers.BooleanField(
+        required=True,
+        help_text="True = Anfrage annehmen, False = Anfrage ablehnen"
+    )
