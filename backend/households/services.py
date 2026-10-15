@@ -5,7 +5,7 @@ from django.utils import timezone
 from .models import Household, PositionCategory, HouseholdJoinRequest
 from finances.models import Income
 from accounts.services import rebalance_household_costs_on_member_exit
-
+import uuid
 
 @transaction.atomic
 def create_household_for_user(person, validated_data):
@@ -32,7 +32,12 @@ def request_to_join_household(*, person, household_id) -> HouseholdJoinRequest:
         raise ValidationError("Du bist bereits Mitglied in einem Haushalt.")
 
     try:
-        household = Household.objects.get(household_id=household_id)
+        household_uuid = uuid.UUID(str(household_id))
+    except ValueError:
+        raise ValidationError("Ungültiges Format für die Haushalts-ID.")
+
+    try:
+        household = Household.objects.get(household_id=household_uuid)
     except Household.DoesNotExist:
         raise ValidationError("Ein Haushalt mit dieser ID existiert nicht.")
 
