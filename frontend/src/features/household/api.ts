@@ -1,5 +1,7 @@
 import {apiClient} from "@/shared/api";
 
+export type JoinRequestStatus = "pending" | "approved" | "rejected";
+
 export interface Household {
     household_id: string;
     name: string;
@@ -26,9 +28,22 @@ export interface HouseholdCreatePayload {
     currency: string;
 }
 
-export interface JoinHouseholdResponse {
+export interface JoinRequest {
+    request_id: string;
+    household_id: string;
+    household_name: string;
+    person_id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    status: JoinRequestStatus;
+    created_at: string;
+    responded_at: string | null;
+}
+
+export interface JoinRequestResponse {
     message: string;
-    household: Household;
+    join_request: JoinRequest;
 }
 
 export interface HouseholdMember {
@@ -47,10 +62,11 @@ export async function createHousehold(payload: HouseholdCreatePayload): Promise<
     return res.data;
 }
 
-export async function joinHousehold(householdId: string): Promise<JoinHouseholdResponse> {
-    const res = await apiClient.post<JoinHouseholdResponse>("households/join/", {household_id: householdId});
+export async function joinHousehold(householdId: string): Promise<JoinRequestResponse> {
+    const res = await apiClient.post<JoinRequestResponse>("households/join/", {household_id: householdId});
     return res.data;
 }
+
 
 export async function updateHousehold(payload: HouseholdPayload): Promise<Household>{
     const res = await apiClient.patch<Household>("households/update/", payload);
@@ -67,5 +83,22 @@ export async function deleteHousehold(): Promise<void> {
 
 export async function getHouseholdMembers(): Promise<HouseholdMember[]> {
     const res = await apiClient.get<HouseholdMember[]>("households/householdmembers/");
+    return res.data;
+}
+
+export async function getMyJoinRequests(): Promise<JoinRequest[]> {
+    const res = await apiClient.get<JoinRequest[]>("households/my-join-requests/");
+    return res.data;
+}
+
+export async function respondJoinRequest(requestId: string, approve: boolean): Promise<JoinRequestResponse> {
+    const res = await apiClient.post<JoinRequestResponse>(
+        `households/respond-join-requests/${requestId}/`,
+        {approve},
+    );
+    return res.data;
+}
+export async function getHouseholdJoinRequests(): Promise<JoinRequest[]> {
+    const res = await apiClient.get<JoinRequest[]>("households/join-requests/");
     return res.data;
 }

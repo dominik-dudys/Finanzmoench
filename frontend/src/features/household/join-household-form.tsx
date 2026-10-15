@@ -6,6 +6,7 @@ import {Input} from "@/ui-components/ui/input";
 import {Button} from "@/ui-components/ui/button";
 import {joinSchema, type JoinValues} from "@/features/household/schema.ts";
 import {useJoinHousehold} from "@/features/household/use-household.ts";
+import {toast} from "sonner";
 
 export function JoinHouseholdForm({onDone, onBack}: {onDone: () => void; onBack: () => void}) {
     const joinHousehold = useJoinHousehold();
@@ -20,9 +21,12 @@ export function JoinHouseholdForm({onDone, onBack}: {onDone: () => void; onBack:
 
     const onSubmit = handleSubmit((values) => {
         joinHousehold.mutate(values.household_id, {
-            onSuccess: onDone,
+            onSuccess: (data) => {
+                toast.success(data.message);
+                onDone();
+            },
             onError: (err) => {
-                const message = (err as {error?: string})?.error ?? "Beitritt fehlgeschlagen.";
+                const message = (err as {error?: string})?.error ?? "Anfrage fehlgeschlagen.";
                 setError("root", {message});
             },
         });
@@ -45,7 +49,7 @@ export function JoinHouseholdForm({onDone, onBack}: {onDone: () => void; onBack:
                             {errors.root && <FieldError>{errors.root.message}</FieldError>}
                             <div className="flex gap-3">
                                 <Button type="submit" disabled={joinHousehold.isPending}>
-                                    {joinHousehold.isPending ? "Tritt bei..." : "Beitreten"}
+                                    {joinHousehold.isPending ? "Wird gesendet..." : "Anfrage senden"}
                                 </Button>
                                 <Button type="button" variant="outline" onClick={onBack}>
                                     Zurück
