@@ -5,6 +5,8 @@ import {NoHouseholdDashboard} from "@/features/household/no-household-dashboard.
 import {HouseholdDashboard} from "@/features/household/household-dashboard.tsx";
 import {CreateHouseholdForm} from "@/features/household/create-household-form.tsx";
 import {JoinHouseholdForm} from "@/features/household/join-household-form.tsx";
+import {MyJoinRequestsCard} from "@/features/household/my-join-requests-card.tsx";
+
 
 type View = "dashboard" | "create" | "join";
 
@@ -21,7 +23,10 @@ export function HouseholdPage() {
     return (
         <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
             {!household && view === "dashboard" && (
+                <>
+                <MyJoinRequestsCard/>
                 <NoHouseholdDashboard onCreate={() => setView("create")} onJoin={() => setView("join")}/>
+                </>
             )}
             {!household && view === "create" && (
                 <CreateHouseholdForm onDone={() => setView("dashboard")} onBack={() => setView("dashboard")}/>

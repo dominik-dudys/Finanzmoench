@@ -6,6 +6,7 @@ import {Badge} from "@/ui-components/ui/badge";
 import type {Household, HouseholdMember} from "./api";
 import {HouseholdDetailsCard} from "./household-details-card";
 import {DangerZoneCard} from "./danger-zone-card";
+import {HouseholdJoinRequestsCard} from "./household-join-requests-card";
 
 interface Props {
     household: Household;
@@ -30,7 +31,8 @@ export function HouseholdDashboard({household, members, myId}: Props) {
                 <CardHeader>
                     <CardTitle>Mitglieder einladen</CardTitle>
                     <CardDescription>
-                        Gib diese ID weiter. Damit kann man unter „Haushalt beitreten“ dazukommen.
+                        Gib diese ID weiter. Damit kann man unter „Haushalt beitreten“ eine Anfrage stellen,
+                        die ein Mitglied annehmen muss.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="flex items-center gap-2">
@@ -42,6 +44,9 @@ export function HouseholdDashboard({household, members, myId}: Props) {
                     </Button>
                 </CardContent>
             </Card>
+
+            <HouseholdJoinRequestsCard/>
+
             <Card>
                 <CardHeader>
                     <CardTitle>Mitglieder{members ? ` (${members.length})` : ""}</CardTitle>
