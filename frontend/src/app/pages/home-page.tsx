@@ -70,8 +70,8 @@ export function HomePage() {
         </section>
 
 
-        <section id="features" className="mx-auto max-w-2xl px-6 py-20 text-center">
-            <h1 className="text-4xl font-extrabold tracking-tight text-balance md:text-5xl mb-4">
+    <section id="features" className="mx-auto max-w-2xl scroll-mt-24 px-6 py-20 text-center">
+        <h1 className="text-4xl font-extrabold tracking-tight text-balance md:text-5xl mb-4">
                 Alles, was du brauchst.
             </h1>
             <p className="mt-5 mb-4 text-lg text-muted-foreground">
@@ -96,8 +96,8 @@ export function HomePage() {
             </div>
         </section>
 
-        <section id="funktioniert" className="bg-muted py-16">
-            <div className="mx-auto max-w-5xl px-6">
+    <section id="funktioniert" className="scroll-mt-24 bg-muted py-16">
+        <div className="mx-auto max-w-5xl px-6">
                 <div className="mx-auto mb-10 max-w-md text-center">
                     <h2 className="text-2xl font-bold">In drei Schritten startklar</h2>
                     <p className="mt-2 text-muted-foreground">Kein kompliziertes Setup nötig.</p>

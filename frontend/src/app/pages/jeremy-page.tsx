@@ -20,7 +20,7 @@ import {Switch} from "@/ui-components/ui/switch";
 import {Label} from "@/ui-components/ui/label";
 import {cn} from "@/lib/utils";
 import {AiConsentDialog} from "@/features/jeremyai/ai-consent-dialog";
-
+import {PageError} from "@/shared/components/page-error";
 import {JeremyAvatarImage} from "@/features/jeremyai/jeremy-avatar-image";
 
 type ChatMessage = {
@@ -44,8 +44,8 @@ function errorCode(err: unknown): string {
 
 export function JeremyPage() {
     const queryClient = useQueryClient();
-    const {data: flags, isLoading: flagsLoading} = useFlags();
-    const {data: me, isLoading: meLoading} = useMe();
+    const {data: flags, isLoading: flagsLoading, isError: flagsError, refetch: refetchFlags} = useFlags();
+    const {data: me, isLoading: meLoading, isError: meError, refetch: refetchMe} = useMe();
     const ask = useAskJeremy();
     const updateMe = useUpdateMe();
 
@@ -113,6 +113,19 @@ export function JeremyPage() {
         ? "Tageslimit erreicht"
         : canChat ? "Frag Jeremy…"
             : enabled && !consented ? "Erst Jeremy aktivieren" : "Jeremy ist deaktiviert";
+
+    if (flagsError || meError) {
+        return (
+            <PageError
+                title="JeremyAI"
+                message="Jeremy konnte nicht geladen werden."
+                onRetry={() => {
+                    if (flagsError) refetchFlags();
+                    if (meError) refetchMe();
+                }}
+            />
+        );
+    }
 
     return (
         <div className="mx-auto flex h-[calc(100svh-5rem)] max-w-2xl flex-col gap-3 p-4">
