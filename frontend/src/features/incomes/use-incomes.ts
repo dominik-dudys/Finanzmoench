@@ -3,6 +3,7 @@ import {
     archiveIncome, createIncome, getIncomes, updateIncome,
     type Income, type IncomePayload,
 } from "./api";
+import {useMyHousehold} from "@/features/household/use-household.ts";
 
 const KEY = ["incomes"];
 
@@ -14,9 +15,12 @@ function useInvalidate() {
 }
 
 export function useIncomes() {
+    const {data: household} = useMyHousehold();
+    const householdId = household?.household_id;
     return useQuery({
-        queryKey: KEY,
+        queryKey: [...KEY, householdId],
         queryFn: () => getIncomes(),
+        enabled: !!householdId,
     });
 }
 
@@ -45,11 +49,14 @@ export function useArchiveIncome() {
 }
 
 export function useEndedIncomes(dates: string[], activeIds: Set<string>) {
+    const {data: household} = useMyHousehold();
+    const householdId = household?.household_id;
     const results = useQueries({
         queries: dates.map((date) => ({
-            queryKey: [...KEY, "at", date],
+            queryKey: [...KEY, householdId, "at", date],
             queryFn: () => getIncomes(date),
             staleTime: 5 * 60 * 1000,
+            enabled: !!householdId,
         })),
     });
 
