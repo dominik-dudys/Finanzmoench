@@ -6,18 +6,28 @@ import {HouseholdDashboard} from "@/features/household/household-dashboard.tsx";
 import {CreateHouseholdForm} from "@/features/household/create-household-form.tsx";
 import {JoinHouseholdForm} from "@/features/household/join-household-form.tsx";
 import {MyJoinRequestsCard} from "@/features/household/my-join-requests-card.tsx";
-
+import {PageError} from "@/shared/components/page-error";
 
 type View = "dashboard" | "create" | "join";
 
 export function HouseholdPage() {
-    const {data: household, isLoading} = useMyHousehold();
+    const {data: household, isLoading, isError, refetch} = useMyHousehold();
     const {data: members} = useHouseholdMembers(!!household);
     const {data: me} = useMe();
     const [view, setView] = useState<View>("dashboard");
 
     if (isLoading) {
         return <div className="p-6">Lädt...</div>;
+    }
+
+    if (isError) {
+        return (
+            <PageError
+                title="Haushalt"
+                message="Dein Haushalt konnte nicht geladen werden."
+                onRetry={() => refetch()}
+            />
+        );
     }
 
     return (

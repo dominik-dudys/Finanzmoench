@@ -68,10 +68,12 @@ export function useDeleteHousehold(){
 }
 
 export function useHouseholdMembers(enabled: boolean = true){
+    const {data: household} = useMyHousehold();
+    const householdId = household?.household_id;
     return useQuery({
-        queryKey: ["household", "members"],
+        queryKey: ["household", "members", householdId],
         queryFn: getHouseholdMembers,
-        enabled,
+        enabled: enabled && !!householdId,
     });
 }
 
