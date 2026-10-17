@@ -2,6 +2,7 @@ import type {AllauthUser, SessionResponse} from "@/features/auth/api.ts";
 
 export type AuthState =
     | {status: 'loading'}
+    | {status: 'error'}
     | {status: 'anonymous'}
     | {status: 'pending_2fa'}
     | {status: 'pending_verify_email'}

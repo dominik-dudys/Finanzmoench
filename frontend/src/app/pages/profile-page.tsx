@@ -8,6 +8,7 @@ import {Input} from "@/ui-components/ui/input";
 import {Button} from "@/ui-components/ui/button";
 import {useMe, useUpdateMe} from "@/features/profile/use-me.ts";
 import {useMyHousehold} from "@/features/household/use-household.ts";
+import {PageError} from "@/shared/components/page-error";
 
 const profileSchema = z.object({
     first_name: z.string().min(1, "Bitte gib deinen Vornamen ein"),
@@ -23,7 +24,7 @@ const loginMethodLabels: Record<string, string> = {
 };
 
 export function ProfilePage() {
-    const {data: me, isLoading} = useMe();
+    const {data: me, isLoading, isError, refetch} = useMe();
     const updateMe = useUpdateMe();
     const {data: household, isLoading: householdLoading} = useMyHousehold();
 
@@ -45,8 +46,18 @@ export function ProfilePage() {
 
     const onSubmit = handleSubmit((values) => updateMe.mutate(values));
 
-    if (isLoading || !me) {
+    if (isLoading) {
         return <div className="p-6">Lädt...</div>;
+    }
+
+    if (isError || !me) {
+        return (
+            <PageError
+                title="Profil"
+                message="Dein Profil konnte nicht geladen werden."
+                onRetry={() => refetch()}
+            />
+        );
     }
 
     return (

@@ -10,9 +10,10 @@ import {useProviderAccounts} from "@/features/security/use-security.ts";
 import {useAuthenticators} from "@/features/security/use-mfa.ts";
 import {useSubscription} from "@/features/payment/use-subscription.ts";
 import {DataExportCard, DeleteAccountCard} from "@/features/privacy";
+import {PageError} from "@/shared/components/page-error";
 
 export function SettingsPage() {
-    const {data: me, isLoading} = useMe();
+    const {data: me, isLoading, isError, refetch} = useMe();
     const {hash} = useLocation();
 
     const accounts = useProviderAccounts();
@@ -28,7 +29,16 @@ export function SettingsPage() {
         return () => cancelAnimationFrame(frame);
     }, [hash, ready]);
 
-    if (isLoading || !me) return <div className="p-6">Lädt...</div>;
+    if (isLoading) return <div className="p-6">Lädt...</div>;
+    if (isError || !me) {
+        return (
+            <PageError
+                title="Einstellungen"
+                message="Deine Einstellungen konnten nicht geladen werden."
+                onRetry={() => refetch()}
+            />
+        );
+    }
 
     return (
         <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
