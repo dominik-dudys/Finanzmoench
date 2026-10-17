@@ -3,6 +3,7 @@ import {
     archiveCostItem, createCostItem, getCostItems, updateCostItem,
     type CostItemPayload,
 } from "./api";
+import {useMyHousehold} from "@/features/household/use-household.ts";
 
 const KEY = ["cost-items"];
 
@@ -14,9 +15,12 @@ function useInvalidate() {
 }
 
 export function useCostItems() {
+    const {data: household} = useMyHousehold();
+    const householdId = household?.household_id;
     return useQuery({
-        queryKey: KEY,
-        queryFn: getCostItems,
+        queryKey: [...KEY, householdId],
+        queryFn: () => getCostItems(),
+        enabled: !!householdId,
     });
 }
 
