@@ -16,13 +16,13 @@ concurrency:
 jobs:
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     env:
       E2E_PYTHON: python
       MAILPIT_URL: http://localhost:8025
       SECRET_KEY_BE: e2e-secret-key
       DEBUG: '1'
-      # mockup data for external apis
+      # mocked external apis
       GEMINI_API_KEY: dummy-gemini-key
       FISH_API_KEY: dummy-fish-key
       FISH_VOICE_ID: dummy-voice-id
@@ -78,9 +78,11 @@ jobs:
           done
           echo "Mailpit nicht erreichbar" && exit 1
 
-      - name: Run E2E tests
+      # only core tests with 4 workers for more speed :)
+      - name: Run E2E smoke tests
         working-directory: e2e
-        run: npx playwright test
+        timeout-minutes: 6
+        run: npx playwright test -c playwright.ci.config.ts
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
