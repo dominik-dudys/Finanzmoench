@@ -6,8 +6,17 @@ export async function fillOtp(page: Page, code: string) {
   await page.locator('input[data-input-otp]').fill(code);
 }
 
+// Das Frontend holt das CSRF-Cookie beim Laden per Session-Request.
+// Unter Last antwortet das Backend langsam, deshalb erst absenden, wenn das Cookie da ist.
+export async function waitForCsrfCookie(page: Page) {
+  await expect
+    .poll(async () => (await page.context().cookies()).some((c) => c.name === 'csrftoken'), { timeout: 20_000 })
+    .toBe(true);
+}
+
 export async function submitPasswordLogin(page: Page, email: string, password = PASSWORD) {
   await page.goto('/login');
+  await waitForCsrfCookie(page);
   const form = page.locator('form');
   await form.getByLabel('Email').fill(email);
   await form.getByLabel('Passwort', { exact: true }).fill(password);
