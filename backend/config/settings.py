@@ -182,6 +182,7 @@ ACCOUNT_LOGIN_BY_CODE_SUPPORTS_RESEND = True
 ACCOUNT_PASSWORD_RESET_BY_CODE_ENABLED = True
 
 ACCOUNT_ADAPTER = "accounts.adapter.AccountAdapter"
+ACCOUNT_SIGNUP_FORM_CLASS = "accounts.forms.SignupForm"
 ALLAUTH_USER_CODE_FORMAT = {"length": 6, "numeric": True, "dashed": False}
 
 MFA_SUPPORTED_TYPES = ['totp', 'recovery_codes']

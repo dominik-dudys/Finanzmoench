@@ -21,6 +21,8 @@ import {PasswordInput} from "@/ui-components/password-input.tsx";
 
 const signupSchema = z
     .object({
+      first_name: z.string().trim().min(1, "Bitte gib deinen Vornamen ein").max(100),
+      last_name: z.string().trim().min(1, "Bitte gib deinen Nachnamen ein").max(100),
       email: z.email("Bitte gib eine gültige E-Mail-Adresse ein"),
       password: z.string().min(8, "Mindestens 8 Zeichen"),
       confirmPassword: z.string(),
@@ -49,7 +51,7 @@ export function SignupForm({
   });
 
   const mutation = useMutation({
-    mutationFn: (v: SignupValues)=> signup(v.email, v.password),
+    mutationFn: (v: SignupValues) => signup(v.email, v.password, v.first_name, v.last_name),
     onSuccess: async () => {
       await queryClient.invalidateQueries({queryKey: ["auth", "session"]});
       navigate("/register/verify");
@@ -57,7 +59,7 @@ export function SignupForm({
     onError: (err) => {
       if (isAllauthResponse(err) && err.errors){
         for (const e of err.errors){
-          if (e.param === "email" || e.param === "password"){
+          if (e.param === "email" || e.param === "password" || e.param === "first_name" || e.param === "last_name") {
             setError(e.param, {message: e.message});
           } else {
             setError("root", {message: e.message});
@@ -86,6 +88,28 @@ export function SignupForm({
                   Registriere dich mit deiner E-Mail Adresse
                 </p>
               </div>
+              <Field className="grid grid-cols-2 gap-4">
+                <Field>
+                  <FieldLabel htmlFor="first_name">Vorname</FieldLabel>
+                  <Input
+                      id="first_name"
+                      autoComplete="given-name"
+                      aria-invalid={!!errors.first_name}
+                      {...register("first_name")}
+                  />
+                  <FieldError errors={[errors.first_name]} />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="last_name">Nachname</FieldLabel>
+                  <Input
+                      id="last_name"
+                      autoComplete="family-name"
+                      aria-invalid={!!errors.last_name}
+                      {...register("last_name")}
+                  />
+                  <FieldError errors={[errors.last_name]} />
+                </Field>
+              </Field>
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
@@ -147,7 +171,7 @@ export function SignupForm({
                 </Button>
 
                 <Button variant="outline" type="button" onClick={() => {window.location.href = '/accounts/github/login/'}}>
-                  <img src="/github-svgrepo-com.svg" className="size-6"/>
+                  <img src="/github-svgrepo-com.svg" alt="github" className="size-6"/>
                   <span className="sr-only">Sign up with Github</span>
                 </Button>
 
