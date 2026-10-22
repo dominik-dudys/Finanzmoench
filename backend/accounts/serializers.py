@@ -46,6 +46,13 @@ class PersonSerializer(serializers.ModelSerializer):
 class DsgvoDeleteAccountSerializer(serializers.Serializer):
     password = serializers.CharField(
         write_only=True,
-        required=True,
-        help_text="Das aktuelle Passwort des Nutzers zur Bestätigung."
+        required=False,
+        allow_blank=True,
+        help_text="Aktuelles Passwort (für Konten mit Passwort)."
+    )
+    confirm_email = serializers.CharField(
+        write_only=True,
+        required=False,
+        allow_blank=True,
+        help_text="E-Mail-Adresse zur Bestätigung (für Konten nur mit Google/GitHub)."
     )

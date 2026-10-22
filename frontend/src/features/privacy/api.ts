@@ -1,7 +1,8 @@
 import {apiClient} from "@/shared/api";
 
 export interface DeleteAccountPayload {
-    password: string;
+    password?: string;
+    confirm_email?: string;
 }
 
 export interface DataExport {
