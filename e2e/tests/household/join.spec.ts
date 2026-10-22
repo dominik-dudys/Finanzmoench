@@ -7,7 +7,7 @@ test.describe('Haushalt beitreten', () => {
   test('leere ID wird abgefangen', async ({ page }) => {
     await page.goto('/household');
     await page.getByRole('button', { name: 'Haushalt beitreten' }).click();
-    await page.getByRole('button', { name: 'Beitreten' }).click();
+    await page.getByRole('button', { name: 'Anfrage senden' }).click();
     await expect(page.getByText('Bitte Haushalts-ID eingeben')).toBeVisible();
   });
 
@@ -15,7 +15,7 @@ test.describe('Haushalt beitreten', () => {
     await page.goto('/household');
     await page.getByRole('button', { name: 'Haushalt beitreten' }).click();
     await page.getByLabel('Haushalts-ID').fill('keine-uuid');
-    await page.getByRole('button', { name: 'Beitreten' }).click();
+    await page.getByRole('button', { name: 'Anfrage senden' }).click();
     const alert = page.getByRole('alert');
     await expect(alert).toBeVisible();
     await expect(alert).not.toContainText('%(value)s');
@@ -26,7 +26,7 @@ test.describe('Haushalt beitreten', () => {
     await page.goto('/household');
     await page.getByRole('button', { name: 'Haushalt beitreten' }).click();
     await page.getByLabel('Haushalts-ID').fill('99999999-9999-9999-9999-999999999999');
-    await page.getByRole('button', { name: 'Beitreten' }).click();
+    await page.getByRole('button', { name: 'Anfrage senden' }).click();
     await expect(page.getByText('Ein Haushalt mit dieser ID existiert nicht.')).toBeVisible();
   });
 
@@ -43,7 +43,7 @@ test.describe('Haushalt beitreten', () => {
     await page.goto('/household');
     await page.getByRole('button', { name: 'Haushalt beitreten' }).click();
     await page.getByLabel('Haushalts-ID').fill(HOUSEHOLD_IDS.beitritt);
-    await page.getByRole('button', { name: 'Beitreten' }).click();
+    await page.getByRole('button', { name: 'Anfrage senden' }).click();
 
     await expect(page.locator('#household-name')).toHaveValue('WG Beitritt');
     await expect(page.getByText('Mitglieder (2)')).toBeVisible();
