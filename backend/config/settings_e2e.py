@@ -2,11 +2,16 @@ from .settings import *  # noqa: F401,F403
 
 DEBUG = True
 
+# IMMEDIATE + WAL damit mehrere Playwright-Worker parallel schreiben können ohne db zu locken
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "e2e.sqlite3",
-        "OPTIONS": {"timeout": 30},
+        "OPTIONS": {
+            "timeout": 30,
+            "transaction_mode": "IMMEDIATE",
+            "init_command": "PRAGMA journal_mode=WAL;",
+        },
     }
 }
 
