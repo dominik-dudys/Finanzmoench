@@ -37,7 +37,7 @@ from drf_spectacular.types import OpenApiTypes
 # Create your views here.
 
 class CreateCostItemView(APIView):
-    @extend_schema(request=CostItemSerializer)
+    @extend_schema(request=CostItemSerializer, summary="Erstellt einen einzelnen Kostenposten.")
     def post(self, request):
         household = request.user.household
 
@@ -73,6 +73,7 @@ class CreateCostItemView(APIView):
 class UpdateCostItemView(APIView):
     @extend_schema(
             request=CostItemSerializer,
+            summary="Bearbeitet den spezifischen Kostenposten, dessen ID übergeben wird.",
             parameters=[OpenApiParameter(name='cost_item_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH)]
         )
 
@@ -120,7 +121,8 @@ class UpdateCostItemView(APIView):
 
 class DeleteCostItemView(APIView):
     @extend_schema(
-            parameters=[OpenApiParameter(name='cost_item_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH)]
+            parameters=[OpenApiParameter(name='cost_item_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH)],
+            summary="Löscht den Kostenposten, dessen ID übergeben wird."
         )
 
     def delete(self, request, cost_item_id):
@@ -151,6 +153,7 @@ class DeleteCostItemView(APIView):
 class ShowCostItemsView(APIView):
     @extend_schema(
         responses=CostItemSerializer(many=True),
+        summary="Zeigt entweder die aktuellen aktiven Kostenposten, oder die aktiven kostenposten zu einem bestimmtent Datum.",
         parameters=[OpenApiParameter(name='date', description='Format: YYYY-MM-DD für historische Daten', required=False, type=str)]
     )
 
@@ -189,6 +192,7 @@ class ShowCostItemsView(APIView):
 class CostItemDetailView(APIView):
     @extend_schema(
         responses=CostItemSerializer,
+        summary="Zeigt die detaillierten Informationen zum angegebenen Kostenposten an.",
         parameters=[OpenApiParameter(name='cost_item_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH)]
     )
     def get(self, request, cost_item_id):
@@ -209,7 +213,7 @@ class CostItemDetailView(APIView):
 
 
 class CreateIncomeView(APIView):
-    @extend_schema(request=IncomeSerializer)
+    @extend_schema(request=IncomeSerializer, summary="Erstellt ein neues Einkommen.")
     def post(self, request):
             serializer = IncomeSerializer(data=request.data)
             if serializer.is_valid():
@@ -226,6 +230,7 @@ class CreateIncomeView(APIView):
 class UpdateIncomeView(APIView):
     @extend_schema(
         request=IncomeSerializer,
+        summary="Bearbeitet das spezifische Einkommen, dessen ID übergeben wird.",
         parameters=[OpenApiParameter(name='income_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH)]
     )
     def patch(self, request, income_id):
@@ -251,7 +256,8 @@ class UpdateIncomeView(APIView):
 
 class DeleteIncomeView(APIView):
     @extend_schema(
-        parameters=[OpenApiParameter(name='income_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH)]
+        parameters=[OpenApiParameter(name='income_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH)],
+        summary="Löscht das spezifische Einkommen, dessen ID übergeben wird."
     )
     def delete(self, request, income_id):
         try:
@@ -276,6 +282,7 @@ class DeleteIncomeView(APIView):
 class ShowIncomesView(APIView):
     @extend_schema(
         responses=IncomeSerializer(many=True),
+        summary="Zeigt entweder die aktuell aktiven Einkommen, oder die aktiven Einkommen zu einem bestimmtent Datum.",
         parameters=[
             OpenApiParameter(name='date', description='Format: YYYY-MM-DD für historische Daten', required=False, type=OpenApiTypes.DATE)
         ]
@@ -316,6 +323,7 @@ class ShowIncomesView(APIView):
 class IncomeDetailView(APIView):
     @extend_schema(
         responses=IncomeSerializer,
+        summary="Zeigt die detaillierten Informationen zu einem Einkommen.",
         parameters=[OpenApiParameter(name='income_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH)]
     )
     def get(self, request, income_id):
@@ -336,7 +344,7 @@ class IncomeDetailView(APIView):
 
 
 class GlobalSharesView(APIView):
-    @extend_schema(request=GlobalSharesSerializer)
+    @extend_schema(request=GlobalSharesSerializer, summary="Setzt die Kostenverteilung bei allen Kostenposten auf die gleichen eingestellten Werte.")
     def post(self, request):
         household = request.user.household
         if not household:

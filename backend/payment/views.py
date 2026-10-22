@@ -6,6 +6,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class SubscriptionStatusView(APIView):
+    @extend_schema(summary="Zeigt den aktuellen Abostatus an.")
     def get(self, request):
         sub = Subscription.objects.filter(person=request.user).first()
         return Response({
@@ -29,6 +31,7 @@ class SubscriptionStatusView(APIView):
 
 
 class CheckoutView(APIView):
+    @extend_schema(summary="Leitet die Zahlung ein.")
     def post(self, request):
         if is_premium(request.user):
             return Response({"code": "already_premium"}, status=status.HTTP_400_BAD_REQUEST)
@@ -40,6 +43,7 @@ class CheckoutView(APIView):
 
 
 class PortalView(APIView):
+    @extend_schema(summary="Erstellt eine Session bei stripe, gibt die URL davon zurück und leitet daran weiter.")
     def post(self, request):
         if not Subscription.objects.filter(person=request.user).exists():
             return Response({"code": "no_subscription"}, status=status.HTTP_400_BAD_REQUEST)

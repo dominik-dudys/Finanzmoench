@@ -11,6 +11,7 @@ from .services import generate_dsgvo_export_data, delete_user_account_dsgvo
 from django.shortcuts import render
 from rest_framework.response import Response
 from .serializers import PersonSerializer, DsgvoDeleteAccountSerializer
+from drf_spectacular.utils import extend_schema
 
 
 # Create your views here.
@@ -18,9 +19,11 @@ from .serializers import PersonSerializer, DsgvoDeleteAccountSerializer
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(summary="Liefert die Daten des angemeldeten Nutzers für die Profilseite.")
     def get(self, request):
         return Response(PersonSerializer(request.user).data)
 
+    @extend_schema(summary="Aktualisiert die Daten des angemeldeten Nutzers für die Profilseite.")
     def patch(self, request):
         serializer = PersonSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
