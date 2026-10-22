@@ -54,7 +54,13 @@ class JeremyTipView(APIView):
 
         try:
             jeremy_text, chat_session = generate_jeremy_response(request.user, question, session_id)
-            audio_bytes = generate_tts_audio(jeremy_text)
+
+            try:
+                audio_bytes = generate_tts_audio(jeremy_text)
+            except Exception as e:
+                # Antwort und Session sind schon gespeichert → Text trotzdem ausliefern
+                logger.error("TTS-Fehler: %s", e)
+                audio_bytes = b""
 
             record_usage(request.user)
 
