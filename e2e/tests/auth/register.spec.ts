@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { fillOtp } from '../../helpers/auth';
+import { fillOtp, waitForCsrfCookie } from '../../helpers/auth';
 import { waitForCode } from '../../helpers/mailpit';
 import { NO_SESSION } from '../../helpers/personas';
 
@@ -11,6 +11,7 @@ test.describe('Registrierung', () => {
     const since = Date.now();
 
     await page.goto('/register');
+    await waitForCsrfCookie(page);
     await page.getByLabel('Email').fill(email);
     await page.getByLabel('Passwort', { exact: true }).fill('Sehr-Sicher-123!');
     await page.getByLabel('Passwort wiederholen').fill('Sehr-Sicher-123!');
@@ -29,6 +30,7 @@ test.describe('Registrierung', () => {
     const email = `falsch-${Date.now()}@e2e.test`;
 
     await page.goto('/register');
+    await waitForCsrfCookie(page);
     await page.getByLabel('Email').fill(email);
     await page.getByLabel('Passwort', { exact: true }).fill('Sehr-Sicher-123!');
     await page.getByLabel('Passwort wiederholen').fill('Sehr-Sicher-123!');
@@ -43,6 +45,7 @@ test.describe('Registrierung', () => {
 
   test('ungültige E-Mail wird im Formular abgefangen', async ({ page }) => {
     await page.goto('/register');
+    await waitForCsrfCookie(page);
     await page.getByLabel('Email').fill('keine-mail');
     await page.getByLabel('Passwort', { exact: true }).fill('Sehr-Sicher-123!');
     await page.getByLabel('Passwort wiederholen').fill('Sehr-Sicher-123!');
@@ -53,6 +56,7 @@ test.describe('Registrierung', () => {
 
   test('zu kurzes Passwort wird abgelehnt', async ({ page }) => {
     await page.goto('/register');
+    await waitForCsrfCookie(page);
     await page.getByLabel('Email').fill('kurz@e2e.test');
     await page.getByLabel('Passwort', { exact: true }).fill('kurz');
     await page.getByLabel('Passwort wiederholen').fill('kurz');
@@ -63,6 +67,7 @@ test.describe('Registrierung', () => {
 
   test('Passwörter müssen übereinstimmen', async ({ page }) => {
     await page.goto('/register');
+    await waitForCsrfCookie(page);
     await page.getByLabel('Email').fill('anders@e2e.test');
     await page.getByLabel('Passwort', { exact: true }).fill('Sehr-Sicher-123!');
     await page.getByLabel('Passwort wiederholen').fill('Anders-Sicher-123!');

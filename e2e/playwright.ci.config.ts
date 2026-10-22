@@ -26,7 +26,7 @@ const SMOKE_TESTS: [string, string][] = [
   ['payment.spec.ts', 'Abo ist aktiv'],
 ];
 
-// Nur diese Personen werden im Setup angemeldet
+// Nur diese Personen werden im Setup angemeldet (nacheinander, ca. 4 s pro Login)
 const SMOKE_PERSONAS = ['anna', 'ben', 'kosten', 'einkommen', 'kategorie', 'jule', 'frei', 'prem'];
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
@@ -46,7 +46,7 @@ export default defineConfig({
   globalTimeout: 5 * 60_000,
   reporter: process.env.CI ? [['list'], ['github'], ['html', { open: 'never' }]] : base.reporter,
   projects: [
-    { ...project('setup'), grep: setupGrep, fullyParallel: true },
+    { ...project('setup'), grep: setupGrep },
     { ...project('chromium'), grep: smokeGrep },
   ],
 });
