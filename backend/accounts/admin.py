@@ -1,7 +1,7 @@
 from django.contrib import admin, messages
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.models import Group
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Q
 from allauth.mfa.models import Authenticator
 from unfold.admin import ModelAdmin
 from unfold.decorators import display
@@ -48,6 +48,44 @@ class PersonAdmin(ModelAdmin):
                 Authenticator.objects.filter(user=OuterRef("pk"), type=Authenticator.Type.TOTP)
             ))
         )
+
+
+    # ---------- Schutz vor Selbstaussperrung ----------
+
+    SELF_PROTECTED_FIELDS = ["is_active", "is_staff", "is_superuser", "groups", "user_permissions"]
+    SUPERUSER_ONLY_FIELDS = ["is_superuser", "groups", "user_permissions"]
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly = list(super().get_readonly_fields(request, obj))
+        if obj is not None and obj.pk == request.user.pk:
+            # Eigenes Konto: Status und Rechte nicht selbst ändern
+            readonly += self.SELF_PROTECTED_FIELDS
+        elif not request.user.is_superuser:
+            # Nur Superuser dürfen Superuser-Status und Rechte vergeben
+            readonly += self.SUPERUSER_ONLY_FIELDS
+        return list(dict.fromkeys(readonly))  # Duplikate entfernen
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None:
+            if obj.pk == request.user.pk:
+                return False
+            if obj.is_superuser and not request.user.is_superuser:
+                return False
+        return super().has_delete_permission(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        # Sammel-Löschen: sich selbst (und als Nicht-Superuser: Superuser) überspringen
+        protected = Q(pk=request.user.pk)
+        if not request.user.is_superuser:
+            protected |= Q(is_superuser=True)
+        skipped = queryset.filter(protected).count()
+        if skipped:
+            self.message_user(
+                request,
+                f"{skipped} übersprungen (du selbst oder Superuser).",
+                messages.WARNING,
+            )
+        super().delete_queryset(request, queryset.exclude(protected))
 
     # ---------- Spalten ----------
 
