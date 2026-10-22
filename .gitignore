@@ -7,6 +7,6 @@
 /.idea/git_toolbox_prj.xml
 
 __pycache__/
-   *.pyc
+*.pyc
 
 /backend/e2e.sqlite3*
