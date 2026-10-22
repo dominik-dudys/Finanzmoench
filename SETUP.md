@@ -119,10 +119,27 @@ python manage.py runserver
 | http://localhost:8000/api/docs/ | Swagger UI |
 | http://localhost:8000/api/schema/ | OpenAPI-Schema |
 
+### Superuser und Admin-Dashboard
+
+Für den Zugang zum Admin-Dashboard wird lokal ein Superuser mit dem Django-Befehl
+`createsuperuser` angelegt (im Ordner `backend/`, mit aktivierter venv):
+
+```bash
+python manage.py createsuperuser
+```
+
+Der Befehl fragt nacheinander die Zugangsdaten (u. a. E-Mail und Passwort) ab. Mit genau diesen
+Daten meldet man sich anschließend unter http://localhost:8000/admin/ im Admin-Dashboard an.
+Dort lassen sich alle Daten einsehen und bearbeiten, z. B. Benutzer, Haushalte und Feature-Flags.
+
+Im Docker-Stack wird der Befehl im Container ausgeführt
+(`docker compose exec web python manage.py createsuperuser`), das Dashboard liegt dann unter
+http://localhost/admin/.
+
 ### Feature-Flags anlegen
 
 Nach einem frischen Setup existieren keine Feature-Flags, unbekannte Flags gelten als
-deaktiviert. Im Admin unter **Feature Flags** anlegen, jeweils mit `enabled` aktiv und
+deaktiviert. Im Admin-Dashboard (mit dem Superuser angemeldet) unter **Feature Flags** anlegen, jeweils mit `enabled` aktiv und
 `rollout_percent = 100`:
 
 | Flag | Schaltet frei |
