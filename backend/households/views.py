@@ -27,7 +27,7 @@ from .services import (
 
 
 class CreateHouseholdView(APIView):
-    @extend_schema(request=HouseholdSerializer, responses=HouseholdSerializer)
+    @extend_schema(request=HouseholdSerializer, responses=HouseholdSerializer, summary="Erstellt einen neuen Haushalt.")
     def post(self, request):
         if request.user.household:
             return Response(
@@ -51,7 +51,7 @@ class CreateHouseholdView(APIView):
 
 class JoinHouseholdView(APIView):
     @extend_schema(
-        summary="Beitrittsanfrage an einen Haushalt senden",
+        summary="Sendet eine Beitrittsanfrage an einen Haushalt.",
         request=inline_serializer(
             name='JoinHouseholdRequest',
             fields={'household_id': serializers.UUIDField()}
@@ -86,7 +86,7 @@ class JoinHouseholdView(APIView):
 
 class ListHouseholdJoinRequestsView(APIView):
     @extend_schema(
-        summary="Offene Beitrittsanfragen für den eigenen Haushalt abrufen",
+        summary="Ruft offene Beitrittsanfragen für den eigenen Haushalt ab.",
         responses=HouseholdJoinRequestSerializer(many=True)
     )
     def get(self, request):
@@ -107,7 +107,7 @@ class ListHouseholdJoinRequestsView(APIView):
 
 class MyJoinRequestsView(APIView):
     @extend_schema(
-        summary="Eigene gesendete Beitrittsanfragen abrufen",
+        summary="Ruft eigene gesendete Beitrittsanfragen ab.",
         responses=HouseholdJoinRequestSerializer(many=True)
     )
     def get(self, request):
@@ -123,7 +123,7 @@ class MyJoinRequestsView(APIView):
 
 class RespondHouseholdJoinRequestView(APIView):
     @extend_schema(
-        summary="Beitrittsanfrage annehmen oder ablehnen",
+        summary="Beitrittsanfrage annehmen oder ablehnen.",
         request=RespondJoinRequestSerializer,
         responses=HouseholdJoinRequestSerializer,
         parameters=[
@@ -158,7 +158,7 @@ class RespondHouseholdJoinRequestView(APIView):
 
 
 class MyHouseholdView(APIView):
-    @extend_schema(responses=HouseholdSerializer)
+    @extend_schema(responses=HouseholdSerializer, summary="Ruft detaillierte Informationen zum eigenen Haushalt ab.")
     def get(self, request):
         household = request.user.household
         if not household:
@@ -170,7 +170,7 @@ class MyHouseholdView(APIView):
 
 
 class UpdateHouseholdView(APIView):
-    @extend_schema(request=HouseholdSerializer, responses=HouseholdSerializer)
+    @extend_schema(request=HouseholdSerializer, responses=HouseholdSerializer, summary="Bearbeitet den eigenen Haushalt.")
     def patch(self, request):
         household = request.user.household
         if not household:
@@ -192,7 +192,8 @@ class LeaveHouseholdView(APIView):
         responses=inline_serializer(
             name='LeaveResponse',
             fields={'message': serializers.CharField()}
-        )
+        ),
+        summary="Entfernt den ausführenden Benutzer aus dem aktuellen Haushalt."
     )
     def post(self, request):
         household = request.user.household
@@ -220,7 +221,8 @@ class DeleteHouseholdView(APIView):
         responses=inline_serializer(
             name='DeleteResponse',
             fields={'message': serializers.CharField()}
-        )
+        ),
+        summary="Löscht den eigenen Haushalt."
     )
     def delete(self, request):
         household = request.user.household
@@ -241,7 +243,8 @@ class ListHouseholdMembersView(APIView):
                 'last_name': serializers.CharField(),
             },
             many=True
-        )
+        ),
+        summary="Listet alle Teilnehmer des Haushalts detailliert auf."
     )
     def get(self, request):
         if not request.user.household:
@@ -256,7 +259,7 @@ class ListHouseholdMembersView(APIView):
 
 
 class CreateCategoryView(APIView):
-    @extend_schema(request=PositionCategorySerializer, responses=PositionCategorySerializer)
+    @extend_schema(request=PositionCategorySerializer, responses=PositionCategorySerializer, summary="Erstellt eine neue, benutzerdefinierte Kategorie.")
     def post(self, request):
         household = request.user.household
         if not household:
@@ -278,7 +281,8 @@ class ShowCategoriesView(APIView):
         responses=PositionCategorySerializer(many=True),
         parameters=[
             OpenApiParameter(name='type', description='Filter: "income" oder "cost"', required=False, type=str)
-        ]
+        ],
+        summary="Listet alle Kategorien des Haushalts detailliert auf."
     )
     def get(self, request):
         household = request.user.household
@@ -295,7 +299,7 @@ class ShowCategoriesView(APIView):
 
 
 class CategoryDetailView(APIView):
-    @extend_schema(responses=PositionCategorySerializer)
+    @extend_schema(responses=PositionCategorySerializer, summary="Zeigt detailliete Informationen zur angegebenen Kategorie.")
     def get(self, request, position_id):
         try:
             category = PositionCategory.objects.get(position_id=position_id, household=request.user.household)
@@ -310,6 +314,7 @@ class UpdateCategoryView(APIView):
     @extend_schema(
         request=PositionCategorySerializer,
         responses=PositionCategorySerializer,
+        summary="Bearbeitet die angegebene Kategorie.",
         parameters=[OpenApiParameter(name='position_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH)]
     )
     def patch(self, request, position_id):
@@ -333,7 +338,8 @@ class DeleteCategoryView(APIView):
         parameters=[
             OpenApiParameter(name='position_id', type=OpenApiTypes.UUID, location=OpenApiParameter.PATH),
             OpenApiParameter(name='fallback_category_id', type=OpenApiTypes.UUID, location=OpenApiParameter.QUERY, required=False, description="UUID der Ersatzkategorie")
-        ]
+        ],
+        summary="Löscht die angegebene Kategorie."
     )
     def delete(self, request, position_id):
         try:

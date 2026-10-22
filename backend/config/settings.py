@@ -279,6 +279,7 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "Finanzmoench API",
     "DESCRIPTION": "API für Haushalte und Finanzen",
     "VERSION": "1.0.0", #vllt noch an versionsnummer automatisch anpassen
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 LOGGING = {

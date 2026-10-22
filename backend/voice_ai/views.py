@@ -20,6 +20,7 @@ from .serializers import (
 from .services import generate_jeremy_response, generate_tts_audio, delete_chat_session
 
 from feature_flags.services import is_flag_active
+from drf_spectacular.utils import extend_schema
 
 # Create your views here.
 
@@ -27,7 +28,12 @@ logger = logging.getLogger(__name__)
 
 class JeremyTipView(APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = JeremyTipRequestSerializer
+
+    @extend_schema(
+        request = JeremyTipRequestSerializer,
+        summary="Sendet eine Nutzerfrage an Gemini und generiert die Antwort.",
+    )
+
 
     def post(self, request):
         if not is_flag_active("jeremy_ai", request.user):
@@ -72,6 +78,8 @@ class JeremyTipView(APIView):
 class AiSessionListView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(summary="Listet alle bisherigen Chats mit der KI auf.")
+
     def get(self, request):
         sessions = AiChatSession.objects.filter(person=request.user)
         serializer = AiChatSessionListSerializer(sessions, many=True)
@@ -80,6 +88,8 @@ class AiSessionListView(APIView):
 
 class AiSessionDetailView(APIView):
     permission_classes = [IsAuthenticated]
+
+    @extend_schema(summary="Ruft den angegebenen KI-Chat auf.")
 
     def get(self, request, session_id):
         try:
@@ -93,15 +103,16 @@ class AiSessionDetailView(APIView):
 class AiUsageView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(summary="Zeigt, wie viele Anfragen der Benutzer an die KI noch übrig hat.")
+
     def get(self, request):
         return Response(get_usage(request.user))
 
 
 class AiSessionDeleteView(APIView):
-    """
-    Endpunkt, um eine Chat-Session zu löschen.
-    """
     permission_classes = [IsAuthenticated]
+
+    @extend_schema(summary="Löscht den angegebenen KI-Chat vollständig.")
 
     def delete(self, request, session_id):
         success = delete_chat_session(request.user, session_id)
