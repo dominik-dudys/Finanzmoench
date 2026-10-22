@@ -13,7 +13,7 @@ import {Button} from "@/ui-components/ui/button";
 import {useFlags} from "@/features/feature-flags/use-flags";
 import {useMe, useUpdateMe} from "@/features/profile/use-me.ts";
 import {chatSessionKey, useAiUsage, useAskJeremy, useChatSessions} from "@/features/jeremyai/use-jeremy";
-import {getChatSession} from "@/features/jeremyai/api";
+import {getChatSession, type ChatSessionDetail} from "@/features/jeremyai/api";
 import {ChatList} from "@/features/jeremyai/chat-list";
 import {UsageMeter} from "@/features/jeremyai/usage-meter";
 import {UpgradeButton} from "@/features/payment/upgrade-button";
@@ -43,6 +43,15 @@ const ERROR_TEXT: Record<string, string> = {
 
 function errorCode(err: unknown): string {
     return typeof err === "object" && err !== null && "code" in err ? String(err.code) : "unknown";
+}
+
+
+function toChatMessages(chat: ChatSessionDetail): ChatMessage[] {
+    return chat.messages.map((m, i) => ({
+        id: `${chat.id}-${i}`,
+        role: m.role === "user" ? "user" : "jeremy",
+        text: m.text,
+    }));
 }
 
 export function JeremyPage() {
@@ -85,6 +94,13 @@ export function JeremyPage() {
     const initialized = useRef(false);
     const latestRequested = useRef<string | null>(null); // schützt vor Antworten in falscher Reihenfolge
 
+    const fetchChat = (id: string) =>
+        queryClient.fetchQuery({
+            queryKey: chatSessionKey(id),
+            queryFn: () => getChatSession(id),
+            staleTime: 0,
+        });
+
     const openChat = async (id: string) => {
         if (ask.isPending) return;
         initialized.current = true;
@@ -94,17 +110,9 @@ export function JeremyPage() {
         setMessages([]);
         setChatLoading(true);
         try {
-            const chat = await queryClient.fetchQuery({
-                queryKey: chatSessionKey(id),
-                queryFn: () => getChatSession(id),
-                staleTime: 0,
-            });
+            const chat = await fetchChat(id);
             if (latestRequested.current !== id) return; // inzwischen anderer Chat gewählt
-            setMessages(chat.messages.map((m, i) => ({
-                id: `${id}-${i}`,
-                role: m.role === "user" ? "user" : "jeremy",
-                text: m.text,
-            })));
+            setMessages(toChatMessages(chat));
         } catch {
             if (latestRequested.current === id) toast.error("Chat konnte nicht geladen werden.");
         } finally {
@@ -126,12 +134,22 @@ export function JeremyPage() {
         if (id === activeId) newChat();
     };
 
-    // Beim Aufrufen: zuletzt genutzten Chat öffnen
+    // Beim Aufrufen: zuletzt genutzten Chat laden.
+    // State wird erst im Callback gesetzt (nicht synchron im Effekt) → kein Cascading Render.
     useEffect(() => {
         if (initialized.current || !sessionsLoaded) return;
         initialized.current = true;
         const latest = sessions[0];
-        if (latest) openChat(latest.id);
+        if (!latest) return;
+
+        latestRequested.current = latest.id;
+        fetchChat(latest.id)
+            .then((chat) => {
+                if (latestRequested.current !== latest.id) return; // Nutzer hat inzwischen gewechselt/geschrieben
+                setActiveId(latest.id);
+                setMessages(toChatMessages(chat));
+            })
+            .catch(() => toast.error("Letzter Chat konnte nicht geladen werden."));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sessionsLoaded]);
 
@@ -145,6 +163,7 @@ export function JeremyPage() {
         const question = input.trim();
         if (!question || !canChat || ask.isPending) return;
         initialized.current = true; // erste Frage vor Laden der Liste → nicht überschreiben
+        if (!activeId) latestRequested.current = null; // laufendes Laden des letzten Chats verwerfen
 
         const replyId = crypto.randomUUID();
         setMessages((m) => [
