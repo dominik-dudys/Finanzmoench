@@ -13,7 +13,8 @@ from django.core.serializers.json import DjangoJSONEncoder
 
 logger = logging.getLogger(__name__)
 
-
+# System-Prompts zur strikten Steuerung des LLMs (Prompt Engineering) und Verhaltensdefinition.
+# Enthält klare Leitplanken, um Missbrauch (Prompt Injection) oder Off-Topic-Gespräche zu verhindern.
 PROMPTS = {
     "serious":(
         "Rollenbeschreibung: Du bist Jeremy, ein energiegeladener, aber absolut seriöser Finanzcoach. "
@@ -60,6 +61,7 @@ PROMPTS = {
 
 
 def get_financial_context(user) -> str:
+    """Sammelt alle Haushaltsdaten und formatiert sie in ein flaches, LLM-freundliches JSON-Format."""
     if not user.household:
         return "{}"
 
@@ -97,6 +99,8 @@ def get_financial_context(user) -> str:
 
 
 def generate_jeremy_response(user, question: str, session_id: str = None) -> tuple[str, AiChatSession]:
+    """Baut den Chat-Kontext auf, injiziert die aktuellen Finanzdaten und kommuniziert mit der Gemini API."""
+
     gemini_api_key = os.environ.get("GEMINI_API_KEY")
     if not gemini_api_key:
         raise ValueError("GEMINI_API_KEY fehlt.")
@@ -104,11 +108,13 @@ def generate_jeremy_response(user, question: str, session_id: str = None) -> tup
     if session_id:
         chat_session = AiChatSession.objects.get(id=session_id, person=user)
     else:
+        # Erstelle eine neue Session, wenn das Frontend (noch) keine ID übergeben hat
         chat_session = AiChatSession.objects.create(
             person=user,
             title=question[:30] + "..." if len(question) > 30 else question
         )
 
+    # Historie strikt chronologisch laden, damit das LLM den Gesprächsverlauf im Zusammenhang versteht
     previous_messages = list(chat_session.messages.order_by('created_at', 'id'))
     history = [
         types.Content(role=msg.role, parts=[types.Part.from_text(text=msg.text)])
@@ -138,10 +144,13 @@ def generate_jeremy_response(user, question: str, session_id: str = None) -> tup
             )
             break
         except genai_errors.APIError as e:
+            # Retry-Mechanismus: Bei Rate-Limits (429) oder temporärer Google-Überlastung (503)
+            # wird der Aufruf bis zu 3x wiederholt.
             if e.code not in (429, 503) or attempt == 3:
                 raise
             time.sleep(attempt)
 
+    # Entfernen von Zeilenumbrüchen, damit die nachfolgende Text-to-Speech API fehlerfrei vorlesen kann
     jeremy_text = gemini_res.text.strip().replace("\n", " ")
 
     AiChatMessage.objects.create(session=chat_session, role="user", text=question)
@@ -152,7 +161,7 @@ def generate_jeremy_response(user, question: str, session_id: str = None) -> tup
     return jeremy_text, chat_session
 
 def generate_tts_audio(text: str) -> bytes:
-    """Sendet den Text an Fish Audio und gibt die MP3-Bytes zurück."""
+    """Wandelt den generierten Text per Fish Audio API synchron in eine MP3-Audiodatei um."""
     fish_api_key = os.environ.get("FISH_API_KEY")
     voice_id = os.environ.get("FISH_VOICE_ID")
 
@@ -171,11 +180,14 @@ def generate_tts_audio(text: str) -> bytes:
         "format": "mp3"
     }
 
+    # Extra hoher Timeout (90s), da die Audio-Generierung bei längeren Texten signifikant Zeit beansprucht
     response = requests.post(url, json=data, headers=headers, timeout=90)
 
     if not response.ok:
         raise RuntimeError(f"Fish Audio HTTP Fehler {response.status_code}: {response.text}")
 
+    # Sicherheits-Check: Falls die API intern fehlschlägt (ohne 500er Status),
+    # gibt sie oft eine JSON-Fehlermeldung statt der erwarteten MP3-Bytes zurück.
     content_type = response.headers.get("Content-Type", "")
     if "application/json" in content_type:
         logger.error(f"Fish Audio gab JSON statt Audio zurück: {response.text}")

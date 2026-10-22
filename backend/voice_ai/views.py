@@ -34,13 +34,15 @@ class JeremyTipView(APIView):
         summary="Sendet eine Nutzerfrage an Gemini und generiert die Antwort.",
     )
 
-
     def post(self, request):
+        # Feature-Flag und Consent-Check: KI-Features können systemweit deaktiviert werden
+        # und erfordern zwingend die explizite Zustimmung des Nutzers.
         if not is_flag_active("jeremy_ai", request.user):
             return Response({"code": "jeremy_disabled"}, status=503)
         if request.user.ai_consent_at is None:
             return Response({"code": "ai_consent_required"}, status=403)
 
+        # Quota-Prüfung (Spam-Schutz) wird vor den API-Calls an Google und Fish Audio durchgeführt
         usage = get_usage(request.user)
         if usage["remaining"] <= 0:
             return Response({"code": "ai_quota_exceeded", "params": usage}, status=429)
@@ -57,8 +59,12 @@ class JeremyTipView(APIView):
             audio_bytes = generate_tts_audio(jeremy_text)
 
             record_usage(request.user)
-
+            # Performance-Optimierung: Das Audio wird als direkter Binär-Stream gesendet,
+            # nicht als Base64-String im JSON.
             response = HttpResponse(audio_bytes, content_type="audio/mpeg")
+
+            # Da der Body vom Audio belegt ist, werden Text und Session-ID über Custom-Headers an das Frontend übergeben.
+            # quote() URL-codiert den Text, um Abstürze durch unzulässige Header-Zeichen zu verhindern.
             response["X-Jeremy-Text"] = quote(jeremy_text)
             response["X-Chat-Session-Id"] = str(chat_session.id)
             response["Access-Control-Expose-Headers"] = "X-Jeremy-Text, X-Chat-Session-Id"
@@ -68,6 +74,7 @@ class JeremyTipView(APIView):
         except AiChatSession.DoesNotExist:
             return Response({"code": "session_not_found"}, status=404)
         except genai_errors.APIError as e:
+            # Differenzierte Fehlercodes für das Frontend (Überlastung vs. echter Crash)
             logger.error("Gemini-Fehler [%s]: %s", e.code, e)
             return Response({"code": "ai_busy" if e.code in (429, 503) else "ai_error"}, status=502)
         except Exception as e:
