@@ -95,7 +95,22 @@ def get_financial_context(user) -> str:
 
     return json.dumps(data, ensure_ascii=False, cls=DjangoJSONEncoder)
 
-jeremy_text = gemini_res.text.strip().replace("\n", " ")
+
+def _call_gemini(client, contents, config):
+    """Fragt Gemini an; bei 429/503 bis zu 3 Versuche mit kurzer Pause."""
+    for attempt in range(1, 4):
+        try:
+            return client.models.generate_content(
+                model="gemini-3.6-flash",
+                contents=contents,
+                config=config
+            )
+        except genai_errors.APIError as e:
+            if e.code not in (429, 503) or attempt == 3:
+                raise
+            time.sleep(attempt)
+    raise RuntimeError("Gemini nicht erreichbar.")  # wird nie erreicht, beruhigt aber die Analyse
+
 
 def generate_jeremy_response(user, question: str, session_id: str = None) -> tuple[str, AiChatSession]:
     gemini_api_key = os.environ.get("GEMINI_API_KEY")
@@ -128,20 +143,8 @@ def generate_jeremy_response(user, question: str, session_id: str = None) -> tup
         temperature=0.7 if mode == "serious" else 1.2
     )
 
-    for attempt in range(1, 4):
-        try:
-            gemini_res = client.models.generate_content(
-                model="gemini-3.6-flash",
-                contents=contents,
-                config=config
-            )
-            break
-        except genai_errors.APIError as e:
-            if e.code not in (429, 503) or attempt == 3:
-                raise
-            time.sleep(attempt)
-
-
+    gemini_res = _call_gemini(client, contents, config)
+    jeremy_text = gemini_res.text.strip().replace("\n", " ")
 
     if chat_session is None:
         chat_session = AiChatSession.objects.create(
