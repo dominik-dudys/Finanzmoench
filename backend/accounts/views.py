@@ -25,6 +25,8 @@ class MeView(APIView):
 
     @extend_schema(summary="Aktualisiert die Daten des angemeldeten Nutzers für die Profilseite.")
     def patch(self, request):
+        # partial=True erlaubt das Aktualisieren einzelner Felder (z.B. nur E-Mail oder Name),
+        # ohne das komplette Objekt im Request-Body senden zu müssen
         serializer = PersonSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -48,6 +50,8 @@ class DsgvoDataExportView(APIView):
     def get(self, request):
         export_dict = generate_dsgvo_export_data(request.user)
 
+        # DjangoJSONEncoder stellt sicher, dass Datetime-Objekte und Decimals korrekt
+        # als Strings formatiert werden, was der Standard-JSON-Encoder von Python nicht kann.
         json_str = json.dumps(
             export_dict,
             indent=2,
@@ -59,6 +63,8 @@ class DsgvoDataExportView(APIView):
         filename = f"dsgvo_datenexport_{date_str}.json"
 
         response = HttpResponse(json_str, content_type="application/json; charset=utf-8")
+        # Content-Disposition "attachment" erzwingt im Browser einen echten Datei-Download,
+        # statt das JSON im Browser-Tab lediglich als Text anzuzeigen.
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
 
@@ -83,6 +89,8 @@ class DsgvoDeleteAccountView(APIView):
         user = request.user
         password = serializer.validated_data["password"]
 
+        # Sicherheits-Check: Da das Löschen unwiderruflich ist (Art. 17 DSGVO),
+        # muss der Nutzer seine Identität nochmals explizit durch sein Passwort bestätigen.
         if not user.check_password(password):
             return Response(
                 {"error": "Das eingegebene Passwort ist nicht korrekt."},

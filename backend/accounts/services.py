@@ -56,6 +56,7 @@ def generate_dsgvo_export_data(user: Person) -> dict:
             "valid_from": inc.valid_from,
             "valid_until": inc.valid_until,
         }
+        # Performance-Optimierung: select_related verhindert das N+1 Query-Problem beim Export großer Datenmengen
         for inc in user.income_set.select_related("position_category").order_by("-valid_from")
     ]
 
@@ -121,6 +122,7 @@ def generate_dsgvo_export_data(user: Person) -> dict:
                 for msg in session.messages.all()
             ],
         }
+        # prefetch_related lädt alle Chat-Nachrichten effizient in einer einzigen Zusatz-Query
         for session in user.ai_chat_sessions.prefetch_related("messages").all()
     ]
 
@@ -167,6 +169,7 @@ def rebalance_household_costs_on_member_exit(person) -> None:
         all_shares = list(item.shares.all())
         remaining_shares = [s for s in all_shares if s.person_id != person.person_id]
 
+        # Historisierung: Der alte Posten wird per heute beendet, um vergangene Abrechnungen nicht zu manipulieren
         item.valid_until = today
         item.save(update_fields=['valid_until'])
 
@@ -194,6 +197,7 @@ def rebalance_household_costs_on_member_exit(person) -> None:
         for i, old_share in enumerate(remaining_shares):
             if i < count - 1:
                 if total_remaining_pct > Decimal('0.00'):
+                    # Dreisatz-Berechnung für das Rebalancing, damit die Verbleibenden den Anteil des Austretenden exakt auffangen
                     new_pct = (old_share.percentage / total_remaining_pct * Decimal('100.00')).quantize(
                         Decimal('0.01'), rounding=ROUND_HALF_UP
                     )
@@ -202,6 +206,7 @@ def rebalance_household_costs_on_member_exit(person) -> None:
                         Decimal('0.01'), rounding=ROUND_HALF_UP
                     )
             else:
+                # Trick zur Vermeidung von Rundungsfehlern: Die letzte Person füllt exakt auf 100% auf
                 new_pct = Decimal('100.00') - total_assigned
 
             CostShare.objects.create(
@@ -229,7 +234,7 @@ def delete_user_account_dsgvo(user) -> None:
             # Gemeinsame aktive Kosten auf die verbleibenden Mitbewohner (100%) umlegen
             rebalance_household_costs_on_member_exit(user)
 
-            # löscht Kostenposten die einzig dem User gehörten
+            # Kaskadierende Bereinigung: Löscht Kostenposten, die nach dem Austritt völlig verwaist wären
             user_only_cost_items = CostItem.objects.filter(
                 household=household,
                 shares__person=user
@@ -241,11 +246,12 @@ def delete_user_account_dsgvo(user) -> None:
             user.delete()
 
             for category in household.position_categories.filter(is_standard=False):
+                # Aufräumaktion: Löscht benutzerdefinierte Kategorien, die nun leer/verwaist sind
                 if not category.income_set.exists() and not category.costitem_set.exists():
                     category.delete()
 
         else:
-            # Der User ist die einzige/letzte Person im Haushalt
+            # Der User ist die einzige/letzte Person im Haushalt -> Komplettlöschung triggern
             household.costitem_set.all().delete()
             user.delete()
             household.delete()
