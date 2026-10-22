@@ -1,0 +1,16 @@
+{% extends "account/email/base_message.html" %}
+{% block content %}
+<p style="margin:0 0 16px;">Hallo{% if user.first_name %} {{ user.first_name }}{% endif %},</p>
+{% if code %}
+<p style="margin:0 0 16px;">bitte bestätige deine E-Mail-Adresse für Finanzmönch mit diesem Code:</p>
+<p style="font-size:32px;font-weight:bold;letter-spacing:6px;text-align:center;background:#f4f4f5;border-radius:8px;padding:16px;margin:24px 0;">{{ code }}</p>
+<p style="margin:0 0 16px;">Gib ihn einfach im geöffneten Browserfenster ein.</p>
+{% else %}
+<p style="margin:0 0 16px;">bitte bestätige deine E-Mail-Adresse für Finanzmönch:</p>
+<p style="text-align:center;margin:24px 0;">
+    <!-- Der Error mit "Cannot resolve file'" ist ein Fehler der IDE. Gemeint ist keine Datei sondern ein Django platzhalter.-->
+    <a href="{{ activate_url }}" style="display:inline-block;background:#18181b;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;">E-Mail bestätigen</a>
+</p>
+{% endif %}
+<p style="margin:0;color:#71717a;font-size:13px;">Du hast dich nicht bei Finanzmönch registriert? Dann kannst du diese E-Mail einfach ignorieren.</p>
+{% endblock content %}
