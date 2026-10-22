@@ -22,20 +22,21 @@ function errorText(err: unknown): string {
 export function DeleteAccountCard({hasPassword, hasActiveSubscription}: Props) {
     const deleteAccount = useDeleteAccount();
     const [open, setOpen] = useState(false);
-    const [password, setPassword] = useState("");
 
-    const canDelete = hasPassword && !hasActiveSubscription;
+    const [confirmation, setConfirmation] = useState("");
+
+    const canDelete = !hasActiveSubscription;
 
     const openDialog = () => {
         deleteAccount.reset();
-        setPassword("");
+        setConfirmation("");
         setOpen(true);
     };
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
         deleteAccount.mutate(
-            {password},
+            hasPassword ? {password: confirmation} : {confirm_email: confirmation},
             {onSuccess: () => toast.success("Dein Konto wurde gelöscht.")},
         );
     };
@@ -54,13 +55,7 @@ export function DeleteAccountCard({hasPassword, hasActiveSubscription}: Props) {
                     Konto löschen
                 </Button>
 
-                {!hasPassword && (
-                    <p className="text-sm text-muted-foreground">
-                        Für Konten mit Google- oder GitHub-Anmeldung ist die Löschung hier noch nicht
-                        möglich. Bitte wende dich an uns (siehe Impressum).
-                    </p>
-                )}
-                {hasPassword && hasActiveSubscription && (
+                {hasActiveSubscription && (
                     <p className="text-sm text-muted-foreground">
                         Du hast ein aktives Premium-Abo. Kündige es zuerst unter{" "}
                         <a href="/#premium" className="underline">Abo</a>, damit keine weiteren Zahlungen
@@ -82,13 +77,15 @@ export function DeleteAccountCard({hasPassword, hasActiveSubscription}: Props) {
                         </DialogHeader>
 
                         <div className="flex flex-col gap-2">
-                            <Label htmlFor="delete-password">Passwort zur Bestätigung</Label>
+                            <Label htmlFor="delete-confirmation">
+                                {hasPassword ? "Passwort zur Bestätigung" : "Deine E-Mail-Adresse zur Bestätigung"}
+                            </Label>
                             <Input
-                                id="delete-password"
-                                type="password"
-                                autoComplete="current-password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                id="delete-confirmation"
+                                type={hasPassword ? "password" : "email"}
+                                autoComplete={hasPassword ? "current-password" : "off"}
+                                value={confirmation}
+                                onChange={(e) => setConfirmation(e.target.value)}
                                 autoFocus
                             />
                         </div>
@@ -109,7 +106,7 @@ export function DeleteAccountCard({hasPassword, hasActiveSubscription}: Props) {
                             <Button
                                 type="submit"
                                 variant="destructive"
-                                disabled={!password || deleteAccount.isPending}
+                                disabled={!confirmation || deleteAccount.isPending}
                             >
                                 {deleteAccount.isPending ? "Wird gelöscht..." : "Endgültig löschen"}
                             </Button>
