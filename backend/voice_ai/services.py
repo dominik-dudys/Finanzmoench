@@ -95,6 +95,7 @@ def get_financial_context(user) -> str:
 
     return json.dumps(data, ensure_ascii=False, cls=DjangoJSONEncoder)
 
+jeremy_text = gemini_res.text.strip().replace("\n", " ")
 
 def generate_jeremy_response(user, question: str, session_id: str = None) -> tuple[str, AiChatSession]:
     gemini_api_key = os.environ.get("GEMINI_API_KEY")
@@ -103,13 +104,11 @@ def generate_jeremy_response(user, question: str, session_id: str = None) -> tup
 
     if session_id:
         chat_session = AiChatSession.objects.get(id=session_id, person=user)
+        previous_messages = list(chat_session.messages.all())
     else:
-        chat_session = AiChatSession.objects.create(
-            person=user,
-            title=question[:30] + "..." if len(question) > 30 else question
-        )
+        chat_session = None  # wird erst nach erfolgreicher Antwort angelegt
+        previous_messages = []
 
-    previous_messages = list(chat_session.messages.order_by('created_at', 'id'))
     history = [
         types.Content(role=msg.role, parts=[types.Part.from_text(text=msg.text)])
         for msg in previous_messages
@@ -142,7 +141,13 @@ def generate_jeremy_response(user, question: str, session_id: str = None) -> tup
                 raise
             time.sleep(attempt)
 
-    jeremy_text = gemini_res.text.strip().replace("\n", " ")
+
+
+    if chat_session is None:
+        chat_session = AiChatSession.objects.create(
+            person=user,
+            title=question[:30] + "..." if len(question) > 30 else question
+        )
 
     AiChatMessage.objects.create(session=chat_session, role="user", text=question)
     AiChatMessage.objects.create(session=chat_session, role="model", text=jeremy_text)
