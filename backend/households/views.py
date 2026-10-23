@@ -80,6 +80,7 @@ class JoinHouseholdView(APIView):
             )
         except ValidationError as e:
             msg = getattr(e, 'message', str(e))
+            # Dynamische HTTP-Statuscodes aus der View heraus: 404 wenn der Haushalt nicht existiert, ansonsten 400 für reine Logikfehler
             status_code = status.HTTP_404_NOT_FOUND if "existiert nicht" in msg else status.HTTP_400_BAD_REQUEST
             return Response({"error": msg}, status=status_code)
 
@@ -165,6 +166,7 @@ class MyHouseholdView(APIView):
             return Response(None, status=status.HTTP_200_OK)
 
         data = HouseholdSerializer(household).data
+        # Injiziert die Live-Anzahl der Mitglieder direkt in die Response, da das Frontend diesen Wert für die Anzeige benötigt
         data['member_count'] = Person.objects.filter(household=household).count()
         return Response(data, status=status.HTTP_200_OK)
 
@@ -200,6 +202,8 @@ class LeaveHouseholdView(APIView):
         if not household:
             return Response({"error": "Du bist aktuell in keinem Haushalt."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Zustand vor dem Austritt speichern, um dem Frontend eine spezifische Erfolgsmeldung
+        # (normaler Austritt vs. komplette Haushaltsauflösung) zurückzugeben.
         was_last_member = not household.person_set.exclude(pk=request.user.pk).exists()
 
         try:
@@ -347,6 +351,7 @@ class DeleteCategoryView(APIView):
         except PositionCategory.DoesNotExist:
             return Response({"error": "Kategorie nicht gefunden."}, status=status.HTTP_404_NOT_FOUND)
 
+        # Liest optional die UUID einer Ersatzkategorie aus den URL-Parametern aus, um sie an den Service zur Datenmigration zu übergeben
         fallback_id = request.query_params.get('fallback_category_id')
         fallback = None
 

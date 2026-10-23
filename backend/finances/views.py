@@ -95,6 +95,7 @@ class UpdateCostItemView(APIView):
         serializer = CostItemSerializer(cost_item, data=request.data, partial=True)
 
         if serializer.is_valid():
+            # Trennt validierte Daten von verschachtelten Share-Daten und delegiert an die Service-Schicht
             validated_data = serializer.validated_data
             shares_data = validated_data.pop('shares', None)
 
@@ -164,8 +165,8 @@ class ShowCostItemsView(APIView):
 
         target_date_str = request.query_params.get('date')
 
-        #Anzeige der gültigen Kostenposten an exaktem Datum (Historisierte Daten)
         if target_date_str:
+            # Filtert die Historie: Holt den Zustand der Daten exakt zu dem übergebenen Datum in der Vergangenheit
             target_date = parse_date(target_date_str)
 
             if not target_date:
@@ -178,8 +179,9 @@ class ShowCostItemsView(APIView):
                 Q(valid_until__isnull=True) | Q(valid_until__gt=target_date)
             ).order_by('name')
 
-        #Anzeige der aktuell gültigen Kostenposten
+
         else:
+            # Standardfall: Holt nur die aktuell gültigen Daten für das Dashboard
             cost_items = CostItem.objects.filter(
                 household=request.user.household,
                 valid_until__isnull=True
@@ -248,6 +250,7 @@ class UpdateIncomeView(APIView):
 
         serializer = IncomeSerializer(income, data=request.data, partial=True)
         if serializer.is_valid():
+            # Trennt validierte Daten von verschachtelten Share-Daten und delegiert an die Service-Schicht
             updated_income = update_income(income, serializer.validated_data)
             return Response(IncomeSerializer(updated_income).data, status=status.HTTP_200_OK)
 
@@ -389,6 +392,7 @@ class DashboardStatsView(APIView):
         summary="Holt alle Dashboard-Berechnungen (Einkommen, Ausgaben, Anteile) für einen bestimmten Monat."
     )
     def get(self, request):
+        # Fallback: Wenn Frontend keinen Monat/Jahr übergibt, wird der aktuelle Monat verwendet
         household = request.user.household
         if not household:
             return Response({"error": "Du bist in keinem Haushalt."}, status=status.HTTP_400_BAD_REQUEST)

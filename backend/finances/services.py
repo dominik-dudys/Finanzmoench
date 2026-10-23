@@ -29,12 +29,14 @@ def get_price_for_date(cost_item, target_date: date):
     return entry.amount
 
 def create_cost_item(*, household, item_data: dict, shares_data: list) -> CostItem:
+    """Erstellt einen neuen Kostenposten samt zugehöriger prozentualer Aufteilung."""
 
     category = item_data.get('position_category')
     if category and category.household != household:
         raise ValidationError("Diese Kategorie gehört nicht zu diesem Haushalt.")
 
     with transaction.atomic():
+        # Stellt sicher, dass der Posten und die Anteile entweder komplett oder gar nicht gespeichert werden
         cost_item = CostItem.objects.create(
             household=household,
             valid_from=timezone.now().date(),
@@ -56,6 +58,7 @@ def create_cost_item(*, household, item_data: dict, shares_data: list) -> CostIt
 
 
 def update_cost_item(*, cost_item: CostItem, household, update_data: dict, shares_data: list = None) -> CostItem:
+    """Aktualisiert einen Posten. Ändern sich Betrag oder Anteile, wird ein neuer Historien-Eintrag erzeugt."""
 
     category = update_data.get('position_category')
     if category and category.household != household:
@@ -72,9 +75,8 @@ def update_cost_item(*, cost_item: CostItem, household, update_data: dict, share
         needs_history = True
 
     with transaction.atomic():
-
         if needs_history:
-            # Anlegen eines neuen Postens, wenn der bisherige Betrag oder die Verteilung aktualisiert wird
+            # Historisierung: Alten Posten beenden und neuen erstellen, um vergangene Abrechnungen nicht zu verfälschen
 
             cost_item.valid_until = today
             cost_item.save(update_fields=['valid_until'])
@@ -124,12 +126,16 @@ def update_cost_item(*, cost_item: CostItem, household, update_data: dict, share
 
 
 def delete_cost_item(*, cost_item: CostItem) -> CostItem:
+    """Führt einen Soft-Delete durch, indem das Gültigkeitsdatum auf heute gesetzt wird."""
+
     cost_item.valid_until = timezone.now().date()
     cost_item.save(update_fields=['valid_until'])
     return cost_item
 
 
 def create_income(person, amount, position_category=None):
+    """Erstellt ein neues Einkommen."""
+
     if position_category and position_category.household != person.household:
         raise ValidationError("Diese Kategorie gehört nicht zu deinem Haushalt.")
 
@@ -143,6 +149,8 @@ def create_income(person, amount, position_category=None):
 
 @transaction.atomic
 def update_income(income, update_data):
+    """Aktualisiert eine Einkommen. Ändert sich der bEtrag Betrag, wird ein neuer Historien-Eintrag erzeugt."""
+
     category = update_data.get('position_category')
     if category and category.household != income.person.household:
         raise ValidationError("Diese Kategorie gehört nicht zu deinem Haushalt.")
@@ -181,12 +189,17 @@ def update_income(income, update_data):
 
 
 def delete_income(income):
+    """Führt einen Soft-Delete durch, indem das Gültigkeitsdatum auf heute gesetzt wird."""
+
     income.valid_until = date.today()
     income.save()
     return income
 
 
 def calculate_shares_for_mode(household, mode: str, custom_shares: list = None, exclude_category_ids: list = None) -> list:
+    """Berechnet die Kostenanteile der Mitglieder basierend auf dem Modus (Gleichmäßig, Fair nach Einkommen oder Benutzerdefiniert)."""
+
+    # Bei benutzerdefinierten Werten muss nichts berechnet werden, die Eingabe wird direkt übernommen
     if mode == 'custom':
         return custom_shares
 
@@ -199,23 +212,28 @@ def calculate_shares_for_mode(household, mode: str, custom_shares: list = None, 
     calculated_shares = []
     total_assigned = Decimal('0.00')
 
+    # --- MODUS 1: Gleichmäßige Aufteilung (50/50) ---
     if mode == 'equal':
         base_share = (Decimal('100.00') / Decimal(member_count)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         for i, member in enumerate(members):
+            # Alle bis auf die letzte Person bekommen den Basis-Anteil. Die letzte Person bekommt exakt den Rest auf 100%.
             share_val = base_share if i < member_count - 1 else Decimal('100.00') - total_assigned
             calculated_shares.append({'person': member, 'percentage': share_val})
             total_assigned += share_val
 
+    # --- MODUS 2: Faire Aufteilung (Proportional zum Einkommen) ---
     elif mode == 'fair':
         total_household_income = Decimal('0.00')
         member_incomes = []
 
+        #Das anrechenbare Einkommen für jedes Mitglied ermitteln
         for member in members:
             income_query = Income.objects.filter(
                 person=member,
                 valid_until__isnull=True
             )
 
+            # Optionale Logik: Bestimmte Kategorien (z.B. Kindergeld oder Zweckbindungen) aus der Fairness-Berechnung ausschließen
             if exclude_category_ids:
                 income_query = income_query.exclude(position_category_id__in=exclude_category_ids)
 
@@ -224,9 +242,11 @@ def calculate_shares_for_mode(household, mode: str, custom_shares: list = None, 
             total_household_income += active_income
             member_incomes.append({'person': member, 'income': active_income})
 
+        # Abfangen einer Division durch 0 (wenn niemand im Haushalt ein eingetragenes Einkommen hat)
         if total_household_income == Decimal('0.00'):
             raise ValidationError("Das anrechenbare Haushaltseinkommen liegt bei 0. Fair-Split nicht berechenbar.")
 
+        # Den genauen prozentualen Anteil anhand des berechneten Gesamteinkommens ableiten
         for i, item in enumerate(member_incomes):
             if i < member_count - 1:
                 share_val = (item['income'] / total_household_income * Decimal('100.00')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
@@ -241,6 +261,7 @@ def calculate_shares_for_mode(household, mode: str, custom_shares: list = None, 
 
 @transaction.atomic
 def bulk_update_cost_shares(*, household, split_mode: str, shares_data: list = None, cost_item_ids: list = None, exclude_category_ids: list = None) -> list:
+    """Setzt alle Kostenposten, bis auf die ausgeschlossenen, auf den gleichen Cost-Share."""
     final_shares = calculate_shares_for_mode(household, split_mode, shares_data, exclude_category_ids)
 
     items_query = CostItem.objects.filter(household=household, valid_until__isnull=True)
@@ -261,6 +282,8 @@ def bulk_update_cost_shares(*, household, split_mode: str, shares_data: list = N
 
 
 def calculate_dashboard_stats(household, month: int, year: int) -> dict:
+    """Aggregiert alle aktiven Einnahmen und Ausgaben für einen spezifischen Monat zur Anzeige im Dashboard."""
+
     try:
         first_day = datetime.date(year, month, 1)
         _, last_day_of_month = calendar.monthrange(year, month)
@@ -297,7 +320,7 @@ def calculate_dashboard_stats(household, month: int, year: int) -> dict:
             active_costs.append(cost)
             seen_cost_groups.add(cost.history_group_id)
 
-    # Intervall zu Monat Umrechnung
+    # Intervall zu Monat Umrechnung: Normalisiert alle Zahlungsintervalle (täglich, wöchentlich, jährlich) auf einen monatlichen Wert
     def get_monthly_amount(cost: CostItem) -> Decimal:
         if cost.interval == CostItem.IntervalChoices.YEARLY:
             return cost.amount / Decimal('12')
