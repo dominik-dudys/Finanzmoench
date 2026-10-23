@@ -28,12 +28,12 @@ export async function waitForCode(
     if (res.ok) {
       const { messages = [] } = (await res.json()) as { messages?: MailpitSummary[] };
       for (const summary of messages) {
-        if (new Date(summary.Created).getTime() < since - 2_000) continue;
+        if (new Date(summary.Created).getTime() < since - 2_000) continue; // 2 second time tolerance
         const message = (await (await fetch(`${MAILPIT_URL}/api/v1/message/${summary.ID}`)).json()) as {
           Text?: string;
           HTML?: string;
         };
-        const code = message.Text?.match(/\b\d{6}\b/)?.[0] ?? message.HTML?.match(/>\s*(\d{6})\s*</)?.[1];
+        const code = message.Text?.match(/\b\d{6}\b/)?.[0] ?? message.HTML?.match(/>\s*(\d{6})\s*</)?.[1]; // extract code from email via regex match
         if (code && !exclude.includes(code)) {
           await deleteMails([summary.ID]);
           return code;

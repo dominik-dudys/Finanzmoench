@@ -14,7 +14,7 @@ DATABASES = {
         },
     }
 }
-
+#overriding existing settings for testing
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "127.0.0.1"
 EMAIL_PORT = 1025
@@ -24,7 +24,7 @@ EMAIL_HOST_USER = ""
 EMAIL_HOST_PASSWORD = ""
 DEFAULT_FROM_EMAIL = "noreply@finanzmoench.test"
 
-ACCOUNT_RATE_LIMITS = False
+ACCOUNT_RATE_LIMITS = False # no rate limiting bc many tests perform many logins simultaneously
 ACCOUNT_REAUTHENTICATION_TIMEOUT = 60 * 60 * 8
 
 STRIPE_SECRET_KEY = "sk_test_e2e"

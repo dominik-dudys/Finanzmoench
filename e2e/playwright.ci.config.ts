@@ -29,7 +29,7 @@ const SMOKE_TESTS: [string, string][] = [
 // Nur diese Personen werden im Setup angemeldet (nacheinander, ca. 4 s pro Login)
 const SMOKE_PERSONAS = ['anna', 'ben', 'kosten', 'einkommen', 'kategorie', 'jule', 'frei', 'prem'];
 
-const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&'); // regex to escape special characters
 const smokeGrep = new RegExp(SMOKE_TESTS.map(([file, title]) => `${escape(file)} .*${escape(title)}`).join('|'));
 const setupGrep = new RegExp(`Login (${SMOKE_PERSONAS.join('|')})\\b`);
 

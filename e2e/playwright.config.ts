@@ -5,7 +5,7 @@ import path from 'node:path';
 const backendDir = path.resolve(__dirname, '../backend');
 const frontendDir = path.resolve(__dirname, '../frontend');
 
-const pythonCandidates = [
+const pythonCandidates = [ // looks for python venvs on windows and linux filesystems
   path.join(backendDir, '.venv', 'Scripts', 'python.exe'),
   path.join(backendDir, '.venv', 'bin', 'python'),
   path.join(backendDir, 'finanzmoench', 'Scripts', 'python.exe'),
@@ -18,7 +18,7 @@ const djangoEnv = {
   DJANGO_SETTINGS_MODULE: 'config.settings_e2e',
   SECRET_KEY_BE: process.env.SECRET_KEY_BE ?? 'e2e-secret-key-nur-fuer-lokale-tests',
   DEBUG: '1',
-  PYTHONUTF8: '1',
+  PYTHONUTF8: '1', //pythonutf8 needed for windows console window
 };
 
 export default defineConfig({
@@ -58,14 +58,14 @@ export default defineConfig({
     {
       command: [
         `${py} manage.py migrate --noinput`,
-        `${py} manage.py flush --noinput`,
+        `${py} manage.py flush --noinput`, //db is emptied so that every run starts clear
         `${py} manage.py seed_e2e`,
         `${py} manage.py runserver 8000 --noreload`,
       ].join(' && '),
       cwd: backendDir,
-      url: 'http://127.0.0.1:8000/api/flags/',
+      url: 'http://127.0.0.1:8000/api/flags/', // health check, this endpoint should always respond even without login
       env: djangoEnv,
-      reuseExistingServer: false,
+      reuseExistingServer: false, // dont reuse old server, otherwise tests are performed against wrong db
       timeout: 180_000,
       stdout: 'pipe',
       stderr: 'pipe',

@@ -57,14 +57,14 @@ class PortalView(APIView):
             return Response({"code": "payment_provider_error"}, status=status.HTTP_502_BAD_GATEWAY)
 
 
-SUBSCRIPTION_EVENTS = {
+SUBSCRIPTION_EVENTS = { # only these subscription events are handled but all others also get 200 code because stripe would send them again
     "customer.subscription.created",
     "customer.subscription.updated",
     "customer.subscription.deleted",
 }
 
-# @csrf_exempt ist hier zwingend erforderlich, da Stripe bei Webhook-Aufrufen kein lokales Django-CSRF-Token kennen kann.
-@csrf_exempt
+
+@csrf_exempt #using normal django view because stripe isnt logged in and would get 403 error
 @require_POST
 def stripe_webhook(request):
     try:

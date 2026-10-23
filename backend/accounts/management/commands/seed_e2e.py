@@ -83,7 +83,7 @@ class Command(BaseCommand):
         for name in ("jeremy_ai", "two_factor"):
             FeatureFlag.objects.update_or_create(
                 name=name,
-                defaults={"enabled": True, "rollout_percent": 100, "description": "E2E"},
+                defaults={"enabled": True, "rollout_percent": 100, "description": "E2E"}, # set feature flags to 100%, otherwise features may be unavailable for test users
             )
 
         households = {}
@@ -109,7 +109,7 @@ class Command(BaseCommand):
             if key in CONSENTED:
                 person.ai_consent_at = now
                 person.save(update_fields=["ai_consent_at"])
-            EmailAddress.objects.create(user=person, email=person.email, verified=True, primary=True)
+            EmailAddress.objects.create(user=person, email=person.email, verified=True, primary=True) #email is verified so allauth cant block access for this user
             people[key] = person
 
         def category(household_key, name):
@@ -148,7 +148,7 @@ class Command(BaseCommand):
             "einkommen",
             "250.00",
             "Kindergeld",
-            valid_from=today - timedelta(days=20),
+            valid_from=today - timedelta(days=20), #create older income on purpose
             valid_until=today - timedelta(days=3),
         )
 

@@ -60,6 +60,7 @@ class CostItem(models.Model):
         choices=IntervalChoices.choices,
         default=IntervalChoices.MONTHLY,
     )
+    #valid tells since when this Version is valid, start/end tells the duration of the payment
     valid_from = models.DateField()
     valid_until = models.DateField(null=True, blank=True)
     start_date = models.DateField(null=True, blank=True)
