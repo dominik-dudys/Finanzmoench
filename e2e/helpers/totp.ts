@@ -2,7 +2,7 @@ import { createHmac } from 'node:crypto';
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
-function base32ToBuffer(secret: string): Buffer { //decode base32 image so totp secret can be read from qr code
+function base32ToBuffer(secret: string): Buffer { //decode base32 text so totp secret can be read from qr code
   const clean = secret.replace(/=+$/, '').replace(/\s+/g, '').toUpperCase();
   let bits = '';
   for (const char of clean) {

@@ -11,6 +11,6 @@ export default async function globalSetup() {
       `Mailpit ist unter ${MAILPIT_URL} nicht erreichbar. Starte es mit "npm run mail:up". (${String(error)})`,
     );
   }
-  await deleteAllMails();
-  fs.mkdirSync(path.resolve(__dirname, '.auth'), { recursive: true }); // delete all old mails so no old mail can be read
+  await deleteAllMails(); // delete all old mails so no old mail can be read
+  fs.mkdirSync(path.resolve(__dirname, '.auth'), { recursive: true });
 }

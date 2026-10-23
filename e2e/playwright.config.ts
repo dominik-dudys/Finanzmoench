@@ -65,7 +65,7 @@ export default defineConfig({
       cwd: backendDir,
       url: 'http://127.0.0.1:8000/api/flags/', // health check, this endpoint should always respond even without login
       env: djangoEnv,
-      reuseExistingServer: false, // dont flush running dev servers
+      reuseExistingServer: false, // dont reuse old server, otherwise tests are performed against wrong db
       timeout: 180_000,
       stdout: 'pipe',
       stderr: 'pipe',
