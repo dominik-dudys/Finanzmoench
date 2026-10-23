@@ -75,27 +75,40 @@ class DsgvoDeleteAccountView(APIView):
 
     @extend_schema(
         summary="Account unwiderruflich löschen (Art. 17 DSGVO)",
-        description="Löscht das Konto und alle damit verbundenen Daten restlos. Erfordert das Passwort zur Bestätigung.",
+        description=(
+                "Löscht das Konto und alle damit verbundenen Daten restlos. "
+                "Bestätigung per Passwort, bei Konten ohne Passwort per E-Mail-Adresse."
+        ),
         request=DsgvoDeleteAccountSerializer,
         responses={
             204: OpenApiResponse(description="Account erfolgreich gelöscht."),
-            400: OpenApiResponse(description="Falsches Passwort."),
+            400: OpenApiResponse(description="Passwort bzw. E-Mail-Adresse falsch."),
         }
     )
+
     def post(self, request):
         serializer = DsgvoDeleteAccountSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         user = request.user
-        password = serializer.validated_data["password"]
+        data = serializer.validated_data
 
-        # Sicherheits-Check: Da das Löschen unwiderruflich ist (Art. 17 DSGVO),
-        # muss der Nutzer seine Identität nochmals explizit durch sein Passwort bestätigen.
-        if not user.check_password(password):
-            return Response(
-                {"error": "Das eingegebene Passwort ist nicht korrekt."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        if user.has_usable_password():
+            # Sicherheits-Check: Da das Löschen unwiderruflich ist (Art. 17 DSGVO),
+            # muss der Nutzer seine Identität nochmals explizit durch sein Passwort bestätigen.
+            if not user.check_password(data.get("password", "")):
+                return Response(
+                    {"error": "Das eingegebene Passwort ist nicht korrekt."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        else:
+            # Nur Google/GitHub: Bestätigung über die eigene E-Mail-Adresse
+            if data.get("confirm_email", "").strip().lower() != user.email.lower():
+                return Response(
+                    {"error": "Die E-Mail-Adresse stimmt nicht mit deinem Konto überein."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
         delete_user_account_dsgvo(user)
         return Response(status=status.HTTP_204_NO_CONTENT)
+

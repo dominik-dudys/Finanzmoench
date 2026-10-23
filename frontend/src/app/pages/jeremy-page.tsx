@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from "react";
 import {useQueryClient} from "@tanstack/react-query";
-import {SendHorizontal} from "lucide-react";
+import {History, SendHorizontal, SquarePen} from "lucide-react";
 import {Avatar, AvatarFallback} from "@/ui-components/ui/avatar";
 import {Bubble, BubbleContent} from "@/ui-components/ui/bubble";
 import {Message, MessageAvatar, MessageContent} from "@/ui-components/ui/message";
@@ -12,7 +12,9 @@ import {Input} from "@/ui-components/ui/input";
 import {Button} from "@/ui-components/ui/button";
 import {useFlags} from "@/features/feature-flags/use-flags";
 import {useMe, useUpdateMe} from "@/features/profile/use-me.ts";
-import {useAiUsage, useAskJeremy} from "@/features/jeremyai/use-jeremy";
+import {chatSessionKey, useAiUsage, useAskJeremy, useChatSessions} from "@/features/jeremyai/use-jeremy";
+import {getChatSession, type ChatSessionDetail} from "@/features/jeremyai/api";
+import {ChatList} from "@/features/jeremyai/chat-list";
 import {UsageMeter} from "@/features/jeremyai/usage-meter";
 import {UpgradeButton} from "@/features/payment/upgrade-button";
 import {toast} from "sonner";
@@ -36,10 +38,20 @@ const ERROR_TEXT: Record<string, string> = {
     jeremy_disabled: "Jeremy ist gerade nicht verfügbar.",
     ai_busy: "Jeremy ist gerade überlastet. Versuch es in ein paar Sekunden nochmal.",
     ai_quota_exceeded: "Du hast dein Tageslimit erreicht",
+    session_not_found: "Dieser Chat existiert nicht mehr. Starte einen neuen Chat.",
 };
 
 function errorCode(err: unknown): string {
     return typeof err === "object" && err !== null && "code" in err ? String(err.code) : "unknown";
+}
+
+
+function toChatMessages(chat: ChatSessionDetail): ChatMessage[] {
+    return chat.messages.map((m, i) => ({
+        id: `${chat.id}-${i}`,
+        role: m.role === "user" ? "user" : "jeremy",
+        text: m.text,
+    }));
 }
 
 export function JeremyPage() {
@@ -74,6 +86,74 @@ export function JeremyPage() {
     const canChat = !loading && enabled && consented && !quotaReached;
     const satire = me?.jeremy_mode === "satire";
 
+    // ---------- Chatverlauf ----------
+    const {data: sessions = [], isSuccess: sessionsLoaded} = useChatSessions(enabled && consented);
+    const [activeId, setActiveId] = useState<string | null>(null);
+    const [chatLoading, setChatLoading] = useState(false);
+    const [listOpen, setListOpen] = useState(false);
+    const initialized = useRef(false);
+    const latestRequested = useRef<string | null>(null); // schützt vor Antworten in falscher Reihenfolge
+
+    const fetchChat = (id: string) =>
+        queryClient.fetchQuery({
+            queryKey: chatSessionKey(id),
+            queryFn: () => getChatSession(id),
+            staleTime: 0,
+        });
+
+    const openChat = async (id: string) => {
+        if (ask.isPending) return;
+        initialized.current = true;
+        latestRequested.current = id;
+        setListOpen(false);
+        setActiveId(id);
+        setMessages([]);
+        setChatLoading(true);
+        try {
+            const chat = await fetchChat(id);
+            if (latestRequested.current !== id) return; // inzwischen anderer Chat gewählt
+            setMessages(toChatMessages(chat));
+        } catch {
+            if (latestRequested.current === id) toast.error("Chat konnte nicht geladen werden.");
+        } finally {
+            if (latestRequested.current === id) setChatLoading(false);
+        }
+    };
+
+    const newChat = () => {
+        if (ask.isPending) return;
+        initialized.current = true;
+        latestRequested.current = null;
+        setListOpen(false);
+        setActiveId(null);
+        setMessages([]);
+        setChatLoading(false);
+    };
+
+    const onChatDeleted = (id: string) => {
+        if (id === activeId) newChat();
+    };
+
+    // Beim Aufrufen: zuletzt genutzten Chat laden.
+    // State wird erst im Callback gesetzt (nicht synchron im Effekt) → kein Cascading Render.
+    useEffect(() => {
+        if (initialized.current || !sessionsLoaded) return;
+        initialized.current = true;
+        const latest = sessions[0];
+        if (!latest) return;
+
+        latestRequested.current = latest.id;
+        fetchChat(latest.id)
+            .then((chat) => {
+                if (latestRequested.current !== latest.id) return; // Nutzer hat inzwischen gewechselt/geschrieben
+                setActiveId(latest.id);
+                setMessages(toChatMessages(chat));
+            })
+            .catch(() => toast.error("Letzter Chat konnte nicht geladen werden."));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sessionsLoaded]);
+
+    const activeTitle = sessions.find((s) => s.id === activeId)?.title ?? "Neuer Chat";
 
     const update = (id: string, patch: Partial<ChatMessage>) =>
         setMessages((m) => m.map((msg) => (msg.id === id ? {...msg, ...patch} : msg)));
@@ -82,6 +162,8 @@ export function JeremyPage() {
         e.preventDefault();
         const question = input.trim();
         if (!question || !canChat || ask.isPending) return;
+        initialized.current = true; // erste Frage vor Laden der Liste → nicht überschreiben
+        if (!activeId) latestRequested.current = null; // laufendes Laden des letzten Chats verwerfen
 
         const replyId = crypto.randomUUID();
         setMessages((m) => [
@@ -91,10 +173,15 @@ export function JeremyPage() {
         ]);
         setInput("");
 
-        ask.mutate(question, {
-            onSuccess: ({text, audioUrl}) => {
-                audioUrls.current.push(audioUrl);
+        ask.mutate({question, sessionId: activeId}, {
+            onSuccess: ({text, audioUrl, sessionId}) => {
+                if (audioUrl) audioUrls.current.push(audioUrl);
                 update(replyId, {text, audioUrl, status: undefined});
+                // Neuer Chat: ab jetzt diese Session weiterverwenden
+                if (!activeId && sessionId) {
+                    latestRequested.current = sessionId;
+                    setActiveId(sessionId);
+                }
             },
             onError: (err) => {
                 const code = errorCode(err);
@@ -105,6 +192,10 @@ export function JeremyPage() {
                 // Zustand neu laden, damit Eingabe + Hinweis stimmen
                 if (code === "ai_consent_required") queryClient.invalidateQueries({queryKey: ["profile", "me"]});
                 if (code === "jeremy_disabled") queryClient.invalidateQueries({queryKey: ["feature-flags"]});
+                if (code === "session_not_found") {
+                    latestRequested.current = null;
+                    setActiveId(null);
+                }
             },
         });
     };
@@ -156,6 +247,42 @@ export function JeremyPage() {
                     action={<UpgradeButton variant="link" size="sm" label="Mehr mit Premium" className="h-auto p-0 text-xs"/>}
                 />
             )}
+
+            {/* ---------- Chat-Auswahl ---------- */}
+            {enabled && consented && (
+                <>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setListOpen((o) => !o)}
+                            disabled={ask.isPending}
+                        >
+                            <History/> Chats{sessions.length > 0 && ` (${sessions.length})`}
+                        </Button>
+                        <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+                            {activeTitle}
+                        </span>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={newChat}
+                            disabled={ask.isPending || (activeId === null && messages.length === 0)}
+                        >
+                            <SquarePen/> Neu
+                        </Button>
+                    </div>
+                    {listOpen && (
+                        <ChatList
+                            sessions={sessions}
+                            activeId={activeId}
+                            onSelect={openChat}
+                            onDeleted={onChatDeleted}
+                        />
+                    )}
+                </>
+            )}
+
             {/* ---------- Verlauf ---------- */}
             <MessageScrollerProvider autoScroll defaultScrollPosition="last-anchor">
                 <MessageScroller className="flex-1 rounded-lg border">
@@ -163,7 +290,7 @@ export function JeremyPage() {
                         <MessageScrollerContent className="flex flex-col gap-4 p-4">
                             {messages.length === 0 && (
                                 <p className="py-12 text-center text-sm text-muted-foreground">
-                                    Stell Jeremy eine Frage zu deinen Finanzen!
+                                    {chatLoading ? "Chat wird geladen…" : "Stell Jeremy eine Frage zu deinen Finanzen!"}
                                 </p>
                             )}
                             {messages.map((msg) => (

@@ -98,6 +98,22 @@ def get_financial_context(user) -> str:
     return json.dumps(data, ensure_ascii=False, cls=DjangoJSONEncoder)
 
 
+def _call_gemini(client, contents, config):
+    """Fragt Gemini an; bei 429/503 bis zu 3 Versuche mit kurzer Pause."""
+    for attempt in range(1, 4):
+        try:
+            return client.models.generate_content(
+                model="gemini-3.6-flash",
+                contents=contents,
+                config=config
+            )
+        except genai_errors.APIError as e:
+            if e.code not in (429, 503) or attempt == 3:
+                raise
+            time.sleep(attempt)
+    raise RuntimeError("Gemini nicht erreichbar.")  # wird nie erreicht, beruhigt aber die Analyse
+
+
 def generate_jeremy_response(user, question: str, session_id: str = None) -> tuple[str, AiChatSession]:
     """Baut den Chat-Kontext auf, injiziert die aktuellen Finanzdaten und kommuniziert mit der Gemini API."""
 
@@ -107,15 +123,12 @@ def generate_jeremy_response(user, question: str, session_id: str = None) -> tup
 
     if session_id:
         chat_session = AiChatSession.objects.get(id=session_id, person=user)
+        previous_messages = list(chat_session.messages.all())
     else:
-        # Erstelle eine neue Session, wenn das Frontend (noch) keine ID übergeben hat
-        chat_session = AiChatSession.objects.create(
-            person=user,
-            title=question[:30] + "..." if len(question) > 30 else question
-        )
+        chat_session = None  # wird erst nach erfolgreicher Antwort angelegt
+        previous_messages = []
 
     # Historie strikt chronologisch laden, damit das LLM den Gesprächsverlauf im Zusammenhang versteht
-    previous_messages = list(chat_session.messages.order_by('created_at', 'id'))
     history = [
         types.Content(role=msg.role, parts=[types.Part.from_text(text=msg.text)])
         for msg in previous_messages
@@ -135,23 +148,15 @@ def generate_jeremy_response(user, question: str, session_id: str = None) -> tup
         temperature=0.7 if mode == "serious" else 1.2
     )
 
-    for attempt in range(1, 4):
-        try:
-            gemini_res = client.models.generate_content(
-                model="gemini-3.6-flash",
-                contents=contents,
-                config=config
-            )
-            break
-        except genai_errors.APIError as e:
-            # Retry-Mechanismus: Bei Rate-Limits (429) oder temporärer Google-Überlastung (503)
-            # wird der Aufruf bis zu 3x wiederholt.
-            if e.code not in (429, 503) or attempt == 3:
-                raise
-            time.sleep(attempt)
-
+    gemini_res = _call_gemini(client, contents, config)
     # Entfernen von Zeilenumbrüchen, damit die nachfolgende Text-to-Speech API fehlerfrei vorlesen kann
     jeremy_text = gemini_res.text.strip().replace("\n", " ")
+
+    if chat_session is None:
+        chat_session = AiChatSession.objects.create(
+            person=user,
+            title=question[:30] + "..." if len(question) > 30 else question
+        )
 
     AiChatMessage.objects.create(session=chat_session, role="user", text=question)
     AiChatMessage.objects.create(session=chat_session, role="model", text=jeremy_text)

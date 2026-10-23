@@ -47,8 +47,8 @@ async function post(path: string, body?: unknown): Promise<SessionResponse>{
     }
 }
 
-export const signup = (email: string, password: string)=>
-    post("/signup", {email, password});
+export const signup = (email: string, password: string, firstName: string, lastName: string) =>
+    post("/signup", {email, password, first_name: firstName, last_name: lastName});
 
 export const verifyEmail = (code: string) =>
     post("/email/verify", {key: code});
