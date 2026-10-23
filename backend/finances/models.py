@@ -87,27 +87,33 @@ class CostItem(models.Model):
         if self.end_date and current_date > self.end_date:
             return None
 
-        if self.interval == self.IntervalChoices.DAILY:
-            return current_date + timedelta(days=1)
+        def day_in_month(year, month):
+            last_day = calendar.monthrange(year, month)[1]
+            return date(year, month, min(self.start_date.day, last_day))
 
-        if self.interval == self.IntervalChoices.WEEKLY:
-            return current_date + timedelta(days=7)
+        if current_date < self.start_date:
+            candidate = self.start_date
+        elif self.interval == self.IntervalChoices.DAILY:
+            candidate = current_date + timedelta(days=1)
+        elif self.interval == self.IntervalChoices.WEEKLY:
+            days_since_start = (current_date - self.start_date).days
+            candidate = current_date + timedelta(days=7 - days_since_start % 7)
+        elif self.interval == self.IntervalChoices.MONTHLY:
+            candidate = day_in_month(current_date.year, current_date.month)
+            if candidate <= current_date:
+                next_year = current_date.year + (current_date.month == 12)
+                next_month = current_date.month % 12 + 1
+                candidate = day_in_month(next_year, next_month)
+        elif self.interval == self.IntervalChoices.YEARLY:
+            candidate = day_in_month(current_date.year, self.start_date.month)
+            if candidate <= current_date:
+                candidate = day_in_month(current_date.year + 1, self.start_date.month)
+        else:
+            return None
 
-        if self.interval == self.IntervalChoices.MONTHLY:
-            next_year = current_date.year if current_date.month < 12 else current_date.year + 1
-            next_month = current_date.month + 1 if current_date.month < 12 else 1
-            target_day = min(self.start_date.day, calendar.monthrange(next_year, next_month)[1])
-            return date(next_year, next_month, target_day)
-
-        if self.interval == self.IntervalChoices.YEARLY:
-            next_year = current_date.year + 1
-            target_day = min(self.start_date.day, calendar.monthrange(next_year, self.start_date.month)[1])
-            candidate = date(next_year, self.start_date.month, target_day)
-            if self.end_date and candidate > self.end_date:
-                return None
-            return candidate
-
-        return None
+        if self.end_date and candidate > self.end_date:
+            return None
+        return candidate
 
     @property
     def current_amount(self):

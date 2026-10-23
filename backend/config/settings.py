@@ -182,6 +182,8 @@ ACCOUNT_LOGIN_BY_CODE_SUPPORTS_RESEND = True
 ACCOUNT_PASSWORD_RESET_BY_CODE_ENABLED = True
 
 ACCOUNT_ADAPTER = "accounts.adapter.AccountAdapter"
+ACCOUNT_SIGNUP_FORM_CLASS = "accounts.forms.SignupForm"
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "Finanzmönch: "
 ALLAUTH_USER_CODE_FORMAT = {"length": 6, "numeric": True, "dashed": False}
 
 MFA_SUPPORTED_TYPES = ['totp', 'recovery_codes']
@@ -202,7 +204,7 @@ HEADLESS_FRONTEND_URLS = {
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'de'
 
 TIME_ZONE = 'UTC'
 

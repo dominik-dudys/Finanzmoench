@@ -1,0 +1,6 @@
+{% autoescape off %}{% block content %}{% endblock content %}
+
+–
+Dein Finanzmönch-Team
+Diese E-Mail wurde automatisch verschickt. Bitte antworte nicht darauf.
+{% endautoescape %}

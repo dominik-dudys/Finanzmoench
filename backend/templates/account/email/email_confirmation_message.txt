@@ -1,0 +1,12 @@
+{% extends "account/email/base_message.txt" %}
+{% block content %}{% autoescape off %}Hallo{% if user.first_name %} {{ user.first_name }}{% endif %},
+
+bitte bestätige deine E-Mail-Adresse für Finanzmönch{% if code %} mit diesem Code:
+
+{{ code }}
+
+Gib ihn einfach im geöffneten Browserfenster ein.{% else %} über diesen Link:
+
+{{ activate_url }}{% endif %}
+
+Du hast dich nicht bei Finanzmönch registriert? Dann kannst du diese E-Mail einfach ignorieren.{% endautoescape %}{% endblock content %}

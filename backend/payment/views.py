@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 class SubscriptionStatusView(APIView):
     @extend_schema(summary="Zeigt den aktuellen Abostatus an.")
     def get(self, request):
+        # Liest den Status nur aus der lokalen Datenbank aus (kein langsamer Stripe-API-Call nötig)
         sub = Subscription.objects.filter(person=request.user).first()
         return Response({
             "plan": sub.plan if sub else Subscription.PLAN_FREE,
@@ -33,11 +34,13 @@ class SubscriptionStatusView(APIView):
 class CheckoutView(APIView):
     @extend_schema(summary="Leitet die Zahlung ein.")
     def post(self, request):
+        # Schutzmaßnahme: Verhindert versehentliche Doppelbuchungen für bereits aktive Premium-Nutzer
         if is_premium(request.user):
             return Response({"code": "already_premium"}, status=status.HTTP_400_BAD_REQUEST)
         try:
             return Response({"url": create_checkout_url(request.user)})
         except stripe.StripeError:
+            # Fallback bei Stripe-Downtimes: Backend stürzt nicht ab, sondern gibt sauberen 502 an das Frontend
             logger.exception("Stripe-Checkout fehlgeschlagen")
             return Response({"code": "payment_provider_error"}, status=status.HTTP_502_BAD_GATEWAY)
 
@@ -65,6 +68,8 @@ SUBSCRIPTION_EVENTS = { # only these subscription events are handled but all oth
 @require_POST
 def stripe_webhook(request):
     try:
+        # Kritischer Sicherheits-Check: Verifiziert die kryptografische Signatur des Headers.
+        # Verhindert, dass unbefugte Dritte manipulierte Zahlungs-Erfolgsmeldungen an den Webhook senden.
         stripe.Webhook.construct_event(
             request.body,
             request.headers.get("Stripe-Signature", ""),
@@ -75,6 +80,10 @@ def stripe_webhook(request):
         return HttpResponse(status=400)
 
     event = json.loads(request.body)
+
+    # Filtern irrelevanter Events, um unnötige Datenbank-Operationen zu vermeiden
     if event["type"] in SUBSCRIPTION_EVENTS:
         sync_subscription(event["data"]["object"])
+
+    # Stripe erwartet immer einen schnellen 20x Statuscode, andernfalls wird das Event später erneut gesendet (Retries)
     return HttpResponse(status=200)
