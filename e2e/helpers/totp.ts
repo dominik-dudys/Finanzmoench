@@ -2,7 +2,7 @@ import { createHmac } from 'node:crypto';
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
-function base32ToBuffer(secret: string): Buffer {
+function base32ToBuffer(secret: string): Buffer { //decode base32 image so totp secret can be read from qr code
   const clean = secret.replace(/=+$/, '').replace(/\s+/g, '').toUpperCase();
   let bits = '';
   for (const char of clean) {
@@ -17,7 +17,7 @@ function base32ToBuffer(secret: string): Buffer {
   return Buffer.from(bytes);
 }
 
-export function totp(secret: string, timestamp = Date.now(), period = 30, digits = 6): string {
+export function totp(secret: string, timestamp = Date.now(), period = 30, digits = 6): string { //totp as in rfc 6238
   const counter = Math.floor(timestamp / 1000 / period);
   const buffer = Buffer.alloc(8);
   buffer.writeBigUInt64BE(BigInt(counter));

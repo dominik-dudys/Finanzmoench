@@ -12,5 +12,5 @@ export default async function globalSetup() {
     );
   }
   await deleteAllMails();
-  fs.mkdirSync(path.resolve(__dirname, '.auth'), { recursive: true });
+  fs.mkdirSync(path.resolve(__dirname, '.auth'), { recursive: true }); // delete all old mails so no old mail can be read
 }
