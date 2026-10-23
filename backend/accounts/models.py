@@ -5,7 +5,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseU
 
 # Create your models here.
 
-class PersonManager(BaseUserManager):
+class PersonManager(BaseUserManager): #Manager needed because there is no username and django expects one otherwise
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('Eine E-Mail-Adresse ist zwingend erforderlich')
@@ -24,7 +24,7 @@ class PersonManager(BaseUserManager):
 class Person(AbstractBaseUser, PermissionsMixin):
     person_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    household = models.ForeignKey('households.Household', on_delete=models.SET_NULL, null=True, blank=True)
+    household = models.ForeignKey('households.Household', on_delete=models.SET_NULL, null=True, blank=True) #If a household is deleted the person still exists
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
 
