@@ -41,7 +41,7 @@ const project = (name: string): Project => {
 
 export default defineConfig({
   ...base,
-  workers: process.env.CI ? 4 : '50%',
+  workers: process.env.CI ? 4 : 2,
   // Gesamter Testlauf darf höchstens 5 Minuten dauern
   globalTimeout: 5 * 60_000,
   reporter: process.env.CI ? [['list'], ['github'], ['html', { open: 'never' }]] : base.reporter,
