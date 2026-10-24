@@ -1,21 +1,7 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-import os
-import sys
-import traceback
-import requests
 import datetime
-from urllib.parse import quote
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from django.utils import timezone
-from django.db import transaction
-from decimal import Decimal
-from accounts.models import Person
 from .models import CostItem, CostShare, Income
 from .services import (
     create_cost_item,
