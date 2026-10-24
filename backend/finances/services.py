@@ -6,10 +6,8 @@ from rest_framework.exceptions import ValidationError
 import datetime
 import calendar
 from datetime import date
-from django.shortcuts import get_object_or_404
 from django.db.models import Q, Sum, F
 from decimal import Decimal, ROUND_HALF_UP
-from django.db.models import Prefetch
 
 
 
