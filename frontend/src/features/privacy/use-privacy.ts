@@ -26,7 +26,7 @@ export function useDeleteAccount() {
     return useMutation({
         mutationFn: deleteAccount,
         onSuccess: async () => {
-            // Wie beim Logout: Nutzerdaten verwerfen, Session neu holen → "anonymous"
+            // Wie beim Logout: Nutzerdaten verwerfen, Session neu holen -> "anonymous"
             queryClient.removeQueries({predicate: (q) => q.queryKey[0] !== "auth"});
             await queryClient.resetQueries({queryKey: ["auth", "session"]});
             navigate("/", {replace: true});

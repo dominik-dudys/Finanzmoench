@@ -13,7 +13,7 @@ export type Authenticator =
 
 export interface TotpSetup {
     secret: string;
-    totp_url: string; // otpauth://... → wird zum QR-Code
+    totp_url: string; // otpauth://... -> wird zum QR-Code
 }
 
 export interface RecoveryCodes {

@@ -13,7 +13,7 @@ export function UseLogout() {
         onSuccess: async () => {
             // Alle Nutzerdaten verwerfen (Profil, Kosten, Abo, …)
             queryClient.removeQueries({predicate: (q) => q.queryKey[0] !== "auth"});
-            // Session neu vom Backend holen → AuthProvider sieht sofort "abgemeldet"
+            // Session neu vom Backend holen -> AuthProvider sieht sofort "abgemeldet"
             await queryClient.resetQueries({queryKey: SESSION_KEY});
             navigate("/", {replace: true});
         },

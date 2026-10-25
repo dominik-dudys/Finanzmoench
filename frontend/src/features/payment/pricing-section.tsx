@@ -11,7 +11,6 @@ import {setUpgradeIntent} from "./upgrade-intent";
 
 type Plan = "free" | "premium";
 
-// "✓" → nur Bezeichnung, Zahl → "2 Fragen an …", "–" → weglassen
 function featureList(plan: Plan): string[] {
     return PLAN_FEATURES.flatMap((f) => {
         const value = f[plan];

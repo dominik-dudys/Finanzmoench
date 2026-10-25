@@ -29,7 +29,7 @@ SECRET_KEY = os.environ["SECRET_KEY_BE"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "0") == "1"
 
-ALLOWED_HOSTS = ['finanzmönch.de', 'www.finanzmönch.de','xn--finanzmnch-kcb.de', 'www.xn--finanzmnch-kcb.de', '127.0.0.1', 'localhost', '127.0.0.1:8000']  # Für Produktion später echte Domain eintragen!!
+ALLOWED_HOSTS = ['finanzmönch.de', 'www.finanzmönch.de','xn--finanzmnch-kcb.de', 'www.xn--finanzmnch-kcb.de', '127.0.0.1', 'localhost', '127.0.0.1:8000']
 
 CSRF_TRUSTED_ORIGINS = [
     "https://finanzmönch.de",

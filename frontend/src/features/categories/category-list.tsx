@@ -15,7 +15,7 @@ const EMPTY_TEXT: Record<CategoryType, string> = {
 };
 
 interface Props {
-    categories: Category[];   // bereits nach Typ gefiltert
+    categories: Category[]; // bereits nach Typ gefiltert
     type: CategoryType;
     isLoading: boolean;
     onEdit: (category: Category) => void;
@@ -52,7 +52,7 @@ export function CategoryList({categories, type, isLoading, onEdit, onDelete}: Pr
                     <span className="min-w-0 flex-1 truncate font-medium">{c.name}</span>
 
                     {c.is_standard ? (
-                        // Standard-Kategorien: vom Backend gesperrt → keine Aktionen
+                        // Standard-Kategorien: vom Backend gesperrt -> keine Aktionen
                         <Badge variant="secondary" className="mr-2">Standard</Badge>
                     ) : (
                         <DropdownMenu>

@@ -21,7 +21,7 @@ function startOfToday(): Date {
     return d;
 }
 
-// "2026-01-15" → lokales Datum (ohne UTC-Verschiebung)
+// "2026-01-15" -> lokales Datum (ohne UTC-Verschiebung)
 function parseISO(iso: string): Date {
     const parts = iso.split("-").map(Number);
     return new Date(parts[0] ?? 1970, (parts[1] ?? 1) - 1, parts[2] ?? 1);

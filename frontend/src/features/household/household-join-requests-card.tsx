@@ -15,7 +15,7 @@ export function HouseholdJoinRequestsCard() {
     const {data: requests} = useHouseholdJoinRequests();
     const respond = useRespondJoinRequest();
 
-    // Keine offenen Anfragen → Karte ausblenden
+    // Keine offenen Anfragen -> Karte ausblenden
     if (!requests || requests.length === 0) return null;
 
     const handle = (requestId: string, approve: boolean) => {
