@@ -23,7 +23,7 @@ export function formatMoney(value: number | string, currency = "EUR"): string {
 }
 
 export function formatDate(iso: string): string {
-    // "2026-01-15" → "15.01.2026" (ohne Zeitzonen-Verschiebung)
+    // "2026-01-15" -> "15.01.2026" (ohne Zeitzonen-Verschiebung)
     const [y, m, d] = iso.split("-");
     return `${d}.${m}.${y}`;
 }

@@ -287,7 +287,6 @@ Browser ──► nginx (Port 80/443)
 | input-otp | 1.5 | Eingabe der 6-stelligen Codes |
 | react-qr-code | 2.2 | QR-Code bei der 2FA-Einrichtung |
 | `@fontsource-variable/geist` | 5.3 | Schriftart |
-| i18next, react-i18next, `i18next-browser-languagedetector` | 26.4 / 17.0 / 8.2 | Grundgerüst für Mehrsprachigkeit (Deutsch, Englisch) |
 | ESLint (+ `typescript-eslint`, React-Hooks- und React-Refresh-Plugin), Prettier | 10.9 / 3.9 | Linting und Formatierung |
 
 ### Tests
@@ -365,7 +364,7 @@ frontend/               React-App (Vite + TypeScript)
 └── src/
     ├── app/            Router, Layouts, Seiten, Diagramme
     ├── features/       Fachliche Module (auth, costs, household, jeremyai, payment, …)
-    ├── shared/         API-Client, i18n, gemeinsame Komponenten
+    ├── shared/         API-Client, gemeinsame Komponenten
     └── ui-components/  UI-Bausteine (shadcn/ui)
 e2e/                    Playwright-Tests
 nginx/                  Dockerfile und Konfiguration (dev/prod)

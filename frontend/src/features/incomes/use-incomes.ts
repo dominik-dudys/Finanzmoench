@@ -63,7 +63,7 @@ export function useEndedIncomes(dates: string[], activeIds: Set<string>) {
     const byId = new Map<string, Income>();
     const lastSeen = new Map<string, string>();
 
-    // dates ist absteigend → erster Treffer = letzter Tag, an dem es aktiv war
+    // dates ist absteigend -> erster Treffer = letzter Tag, an dem es aktiv war
     results.forEach((r, i) => {
         const date = dates[i];
         if (!date) return;

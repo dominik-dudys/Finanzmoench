@@ -29,7 +29,7 @@ export async function askJeremy({question, sessionId}: AskJeremyPayload): Promis
     }
 }
 
-// Bei responseType "blob" kommen auch Fehler als Blob an → wieder in JSON umwandeln
+// Bei responseType "blob" kommen auch Fehler als Blob an -> wieder in JSON umwandeln
 async function parseBlobError(err: unknown): Promise<unknown> {
     if (!(err instanceof Blob)) return err;
     try {

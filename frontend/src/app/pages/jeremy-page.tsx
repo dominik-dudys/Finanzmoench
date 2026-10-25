@@ -135,7 +135,7 @@ export function JeremyPage() {
     };
 
     // Beim Aufrufen: zuletzt genutzten Chat laden.
-    // State wird erst im Callback gesetzt (nicht synchron im Effekt) → kein Cascading Render.
+    // State wird erst im Callback gesetzt (nicht synchron im Effekt) -> kein Cascading Render.
     useEffect(() => {
         if (initialized.current || !sessionsLoaded) return;
         initialized.current = true;

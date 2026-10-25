@@ -65,7 +65,7 @@ export function CategoryFormDialog({open, onClose, category, defaultType}: Props
         if (e.name?.[0]) setError("name", {message: e.name[0]});
 
         if (e.error) {
-            // Doppelter Name kommt als Text vom Service → beim Namen anzeigen
+            // Doppelter Name kommt als Text vom Service -> beim Namen anzeigen
             if (e.error.includes("existiert bereits")) {
                 setError("name", {message: "Eine Kategorie mit diesem Namen gibt es bereits."});
             } else {

@@ -30,7 +30,7 @@ export function HomePage() {
 <>
         <section className="mx-auto max-w-2xl px-6 py-20 text-center">
          <h1 className="text-4xl font-extrabold tracking-tight text-balance md:text-5xl">
-            Deine Fixkosten endlich im griff.
+            Deine Fixkosten endlich im Griff.
          </h1>
             <p className="mt-5 mb-4 text-lg text-muted-foreground">
                 Finanzmönch behält deine wiederkehrenden Ausgaben im Blick, damit du es nicht musst.
@@ -81,12 +81,12 @@ export function HomePage() {
             <div className="grid grid-cols-3 gap-4">
                 <Card className="flex flex-col items-center gap-3 p-6 text-center">
                     <header className="text-lg font-semibold">Alle Fixkosten im Überblick</header>
-                    <main className="ext-sm text-muted-foreground">Finanzmönch hilft dir den Überblick zu behalten</main>
+                    <main className="text-sm text-muted-foreground">Finanzmönch hilft dir den Überblick zu behalten</main>
                 </Card>
 
                 <Card className="flex flex-col items-center gap-3 p-6 text-center">
                     <header className="text-lg font-semibold">Erinnerungen</header>
-                    <main className="ext-sm text-muted-foreground">Nie wieder eine Zahlung übersehen</main>
+                    <main className="text-sm text-muted-foreground">Wann steht meine nächste Zahlung an?</main>
                 </Card>
 
                 <Card className="flex flex-col items-center gap-3 p-6 text-center">

@@ -17,7 +17,7 @@ def get_price_for_date(cost_item, target_date: date):
         .filter(history_group_id=cost_item.history_group_id)
         .filter(valid_from__lte=target_date)
         .filter(Q(valid_until__isnull=True) | Q(valid_until__gte=target_date))
-        .order_by("-valid_from", F('valid_until').desc(nulls_first=True)) # Tie-Breaker nicht vergessen!
+        .order_by("-valid_from", F('valid_until').desc(nulls_first=True))
         .first()
     )
 
@@ -115,7 +115,7 @@ def update_cost_item(*, cost_item: CostItem, household, update_data: dict, share
             return new_item
 
         else:
-            # Update des bisherigen postens, wenn sich der Betrag oder die Verteilung nicht geändert hat
+            # Update des bisherigen Postens, wenn sich der Betrag oder die Verteilung nicht geändert hat
             for attr, value in update_data.items():
                 setattr(cost_item, attr, value)
             cost_item.save()
@@ -147,7 +147,7 @@ def create_income(person, amount, position_category=None):
 
 @transaction.atomic
 def update_income(income, update_data):
-    """Aktualisiert eine Einkommen. Ändert sich der bEtrag Betrag, wird ein neuer Historien-Eintrag erzeugt."""
+    """Aktualisiert ein Einkommen. Ändert sich der Betrag, wird ein neuer Historien-Eintrag erzeugt."""
 
     category = update_data.get('position_category')
     if category and category.household != income.person.household:

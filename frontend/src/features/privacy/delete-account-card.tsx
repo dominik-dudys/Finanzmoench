@@ -58,7 +58,7 @@ export function DeleteAccountCard({hasPassword, hasActiveSubscription}: Props) {
                 {hasActiveSubscription && (
                     <p className="text-sm text-muted-foreground">
                         Du hast ein aktives Premium-Abo. Kündige es zuerst unter{" "}
-                        <a href="/#premium" className="underline">Abo</a>, damit keine weiteren Zahlungen
+                        <a href="/einstellungen#premium" className="underline">Abo</a>, damit keine weiteren Zahlungen
                         anfallen.
                     </p>
                 )}
