@@ -141,8 +141,8 @@ AUTH_USER_MODEL = 'accounts.Person'
 SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
+    'django.contrib.auth.backends.ModelBackend', #Modelbackend for django admin login
+    'allauth.account.auth_backends.AuthenticationBackend', #allauth backend for email login in frontend
 ]
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -163,7 +163,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*'] #password2 for re-entering passwort; '*' means mandatory field
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 # bei registrierung wird ein Code verschickt
@@ -187,13 +187,13 @@ ACCOUNT_EMAIL_SUBJECT_PREFIX = "Finanzmönch: "
 ALLAUTH_USER_CODE_FORMAT = {"length": 6, "numeric": True, "dashed": False}
 
 MFA_SUPPORTED_TYPES = ['totp', 'recovery_codes']
-MFA_TOTP_ISSUER = "Finanzmönch"
+MFA_TOTP_ISSUER = "Finanzmönch" #visible name in authenticator app
 
 HEADLESS_ONLY = False
 
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
-SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True # when logging in with google with an accounts that registered, the oauth account is linked with the old one
 
 HEADLESS_FRONTEND_URLS = {
     "account_confirm_email": "http://localhost:5173/verify-email/{key}",
