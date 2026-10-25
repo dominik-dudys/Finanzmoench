@@ -33,6 +33,9 @@ Die Anwendung ist als Projekt im Modul „Angewandte Business-Application-Entwic
 Cloud“ an der Leibniz-FH Hannover entstanden (Gruppe 2) und läuft öffentlich unter
 [finanzmönch.de](https://finanzmönch.de).
 
+> **Hinweis:** Der Server ist voraussichtlich bis zum **27.12.2026** unter
+> [finanzmönch.de](https://finanzmönch.de) erreichbar.
+
 ## Warum Finanzmönch?
 
 - **Für Haushalte gebaut, nicht für Einzelpersonen.** Mehrere Personen teilen sich einen
@@ -188,7 +191,7 @@ curl -u "mail@example.com:passwort" "https://xn--finanzmnch-kcb.de/api/finances/
 | Nutzerverwaltung | Eigenes User-Modell `Person` (E-Mail als Login), Registrierung mit Bestätigung, Login per Code, Haushalte |
 | Tests | Playwright-E2E-Tests der Kernfunktionen (`e2e/`) |
 | CI/CD-Pipeline | GitHub Actions: `deploy.yml` (Checks und Deployment), `e2e.yml` (Browsertests) |
-| Betrieb unter öffentlicher Domain | eigener Server bei OVH, Domain [finanzmönch.de](https://finanzmönch.de) bei IONOS, HTTPS mit Let's Encrypt |
+| Betrieb unter öffentlicher Domain | eigener Server bei OVH, Domain [finanzmönch.de](https://finanzmönch.de) bei IONOS, HTTPS mit Let's Encrypt, geplant erreichbar bis 27.12.2026 |
 
 ### Wahlpflicht (12 von 12 Punkten)
 
