@@ -1,17 +1,33 @@
 # E2E-Tests (Playwright)
 
-End-to-End-Tests für Finanzmönch mit [Playwright](https://playwright.dev). 126 Tests in 20 Dateien decken Auth (Login, Registrierung, 2FA, Passwort), Haushalt, Kategorien, Kosten, Einnahmen, Dashboard, Profil, JeremyAI und Premium/Stripe ab.
+End-to-End-Tests für Finanzmönch mit [Playwright](https://playwright.dev). Die Tests decken die wichtigsten Abläufe der App ab, von Registrierung und Login über Haushalte und Finanzen bis zu JeremyAI und Premium.
 
-Die Tests laufen gegen eine eigene SQLite-Datenbank (`backend/e2e.sqlite3`), die bei jedem Lauf neu befüllt wird. Mails landen in Mailpit, Gemini, Fish Audio und Stripe werden im Browser gemockt.
+Die Tests laufen gegen eine eigene SQLite-Datenbank, die bei jedem Lauf neu befüllt wird. E-Mails werden von Mailpit abgefangen, externe Dienste (Gemini, Fish Audio, Stripe) werden gemockt.
 
 ## Voraussetzungen
 
-- Node.js ≥ 20
-- Python mit installiertem Backend-venv (`backend/.venv` oder `backend/finanzmoench`)
-- Docker Desktop (für Mailpit)
-- Frontend-Abhängigkeiten installiert (`cd frontend && npm install`)
+- Node.js >= 20
+- Python 3.13 mit einer venv in `backend/.venv`, in der die Backend-Abhängigkeiten installiert sind (siehe unten)
+- Docker (für Mailpit)
+- Installierte Frontend-Abhängigkeiten (`npm install` in `frontend/`)
 
 ## Installation
+
+### Backend-venv
+
+Playwright startet das Backend mit dem Python aus der venv in `backend/.venv` (oder `backend/finanzmoench`), nicht mit dem globalen Python. Die Python-Pakete müssen deshalb **in dieser venv** installiert sein. Pakete, die nur global installiert sind, sieht das Test-Backend nicht, und der Start bricht z. B. mit `ModuleNotFoundError: No module named 'unfold'` ab.
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+macOS/Linux: `python3 -m venv .venv` und `.venv/bin/python -m pip install -r requirements.txt`.
+
+Nach Änderungen an `requirements.txt` (z. B. nach einem `git pull`) den `pip install`-Befehl erneut ausführen. Liegt die venv woanders, den Pfad über `E2E_PYTHON` angeben (siehe Umgebungsvariablen).
+
+### Playwright
 
 ```bash
 cd e2e
@@ -21,106 +37,75 @@ npx playwright install chromium
 
 ## Mailpit starten
 
-Docker Desktop muss laufen.
-
 ```bash
-npm run mail:up      # startet Mailpit (SMTP :1025, Web-UI :8025)
-npm run mail:down    # stoppt Mailpit
+npm run mail:up      # starten
+npm run mail:down    # stoppen
 ```
 
-Web-UI: http://localhost:8025
+Die Weboberfläche ist unter http://localhost:8025 erreichbar.
 
 ## Tests ausführen
 
-Laufende Dev-Server auf Port `8000` und `5173` vorher beenden. Playwright startet Backend und Frontend selbst.
+Laufende Dev-Server auf den Ports `8000` und `5173` vorher beenden. Playwright startet Backend und Frontend selbst.
 
 ```bash
-npm test                               # alle Tests, headless
-npm run test:ui                        # interaktive UI
-npm run test:headed                    # mit sichtbarem Browser
-npm run test:debug                     # Debug-Modus
-npx playwright test tests/costs        # einzelner Ordner
-npx playwright test -g "Kostenposten"  # nach Testnamen filtern
-npm run report                         # HTML-Report des letzten Laufs
+npm test                                   # alle Tests
+npx playwright test -c playwright.ci.config.ts   # nur Kerntests (wie in der CI)
+npm run test:ui                            # interaktive UI
+npm run test:headed                        # mit sichtbarem Browser
+npx playwright test tests/<ordner>         # einzelner Bereich
+npx playwright test -g "<testname>"        # nach Namen filtern
+npm run report                             # HTML-Report des letzten Laufs
 ```
 
-## Ablauf eines Testlaufs
+## Funktionsweise
 
-1. `global-setup.ts` prüft, ob Mailpit erreichbar ist, und leert das Postfach.
-2. Das Backend startet mit `DJANGO_SETTINGS_MODULE=config.settings_e2e` und führt aus:
-   `migrate` → `flush` → `seed_e2e` → `runserver 8000`
-3. Das Frontend startet mit `npm run dev` auf Port `5173`.
-4. `tests/setup/auth.setup.ts` meldet alle Test-Personen per E-Mail-Code an und speichert die Sessions in `e2e/.auth/`.
-5. Die Tests laufen in Chromium, seriell mit einem Worker.
+Beim Start eines Testlaufs:
 
-### `settings_e2e.py`
+1. wird geprüft, ob Mailpit erreichbar ist,
+2. startet das Backend mit `config.settings_e2e`, migriert, leert und befüllt die Datenbank (`seed_e2e`),
+3. startet das Frontend,
+4. werden alle Test-Personen einmal angemeldet und ihre Sessions für die Tests gespeichert.
 
-Erbt von `config/settings.py` und überschreibt:
+**`settings_e2e.py`** erbt von den normalen Settings und stellt auf SQLite, Mailpit als SMTP-Server und Dummy-Stripe-Keys um. Rate-Limits sind deaktiviert.
 
-| Einstellung | Wert |
-|---|---|
-| Datenbank | SQLite `backend/e2e.sqlite3` |
-| E-Mail | SMTP an `127.0.0.1:1025` (Mailpit) |
-| Rate-Limits (allauth) | deaktiviert |
-| Stripe-Keys | Dummy-Werte |
+**`seed_e2e`** legt feste Testdaten an (Personen, Haushalte, Kosten, Einnahmen, Feature-Flags, Abos). Jeder Testbereich hat eigene Personen und Haushalte, damit sich Tests nicht gegenseitig beeinflussen. Alle Test-Accounts nutzen `@e2e.test`-Adressen und das Passwort `E2e-Passwort-123!`.
 
-### `seed_e2e`
+## CI
 
-Management-Command (`backend/accounts/management/commands/seed_e2e.py`), der feste Haushalte, Test-Personen, Kosten, Einnahmen, Feature-Flags und Abos anlegt. Jede Testdatei nutzt eigene Personen und Haushalte, damit sich Tests nicht gegenseitig beeinflussen.
-
-- E-Mail: `<name>@e2e.test`
-- Passwort: `E2e-Passwort-123!`
+Der Workflow `.github/workflows/e2e.yml` läuft bei jedem Push auf `main`. Er führt die Kerntests aus `playwright.ci.config.ts` parallel aus, mit Mailpit als Service-Container und Dummy-Keys für externe APIs. Der Playwright-Report wird als Artefakt hochgeladen.
 
 ## Umgebungsvariablen
 
-| Variable | Zweck | Standard |
-|---|---|---|
-| `E2E_PYTHON` | Pfad zum Python-Interpreter | sucht in `backend/.venv` und `backend/finanzmoench` |
-| `SECRET_KEY_BE` | Django-Secret-Key | `e2e-secret-key-nur-fuer-lokale-tests` |
-| `CI` | aktiviert Retries und `forbidOnly` | – |
-
-```powershell
-$env:E2E_PYTHON="C:\Pfad\zum\venv\Scripts\python.exe"; npm test
-```
+| Variable | Zweck |
+|---|---|
+| `E2E_PYTHON` | Pfad zum Python-Interpreter (Standard: venv im Ordner `backend/`) |
+| `SECRET_KEY_BE` | Django-Secret-Key (Standard: Testwert) |
+| `MAILPIT_URL` | Adresse von Mailpit (Standard: `http://localhost:8025`) |
 
 ## Projektstruktur
 
 ```
-docker-compose.e2e.yaml              # Mailpit
+docker-compose.e2e.yaml           # Mailpit
+.github/workflows/e2e.yml         # CI-Workflow
 backend/
-├── config/settings_e2e.py           # Django-Settings für E2E
-└── accounts/management/commands/
-    └── seed_e2e.py                  # Testdaten
+├── config/settings_e2e.py        # Settings für E2E
+└── accounts/management/commands/seed_e2e.py
 e2e/
-├── package.json
-├── playwright.config.ts             # Config inkl. Webserver-Start
-├── global-setup.ts                  # Mailpit-Check
-├── helpers/
-│   ├── auth.ts                      # Login per E-Mail-Code
-│   ├── mailpit.ts                   # Mailpit-API
-│   ├── personas.ts                  # Test-Personen
-│   └── totp.ts                      # 2FA-Codes
-└── tests/
-    ├── setup/                       # Login aller Personen
-    ├── public/                      # Startseite, geschützte Routen
-    ├── auth/                        # Login, Registrierung, 2FA, Passwort vergessen
-    ├── household/                   # Erstellen, Beitreten, Bearbeiten, Verlassen/Auflösen
-    ├── categories/
-    ├── costs/
-    ├── incomes/
-    ├── dashboard/
-    ├── profile/
-    ├── settings/                    # Passwort, KI-Einwilligung
-    ├── jeremy/
-    └── payment/
+├── playwright.config.ts          # Konfiguration (alle Tests)
+├── playwright.ci.config.ts       # Konfiguration (Kerntests)
+├── global-setup.ts
+├── helpers/                      # Login, Mailpit, Test-Personen, 2FA
+└── tests/                        # Tests nach Bereich
 ```
 
 ## Troubleshooting
 
 | Problem | Lösung |
 |---|---|
-| `Mailpit ist ... nicht erreichbar` | Docker Desktop starten, `npm run mail:up` |
-| Port belegt | Alten `runserver` / `npm run dev` beenden |
-| `ECONNREFUSED ::1:8000` | In `playwright.config.ts` `runserver localhost:8000` verwenden oder Vite-Proxy auf `http://127.0.0.1:8000` setzen |
+| Mailpit nicht erreichbar | Docker starten, `npm run mail:up` |
+| Port belegt | Laufende Dev-Server beenden |
+| `ECONNREFUSED ::1:8000` | Backend bzw. Vite-Proxy auf `127.0.0.1:8000` statt `localhost` umstellen |
 | Falsches Python | `E2E_PYTHON` setzen |
-| Test schlägt fehl | `npm run report`: Screenshot, Video und Trace pro Fehler |
+| `ModuleNotFoundError` beim Start des Backends | Pakete fehlen in der venv: in `backend/` `.\.venv\Scripts\python.exe -m pip install -r requirements.txt` |
+| Test schlägt fehl | `npm run report` öffnen (Screenshot, Video und Trace pro Fehler) |
