@@ -9,6 +9,7 @@
 
 <p align="center">
   <a href="https://finanzmönch.de">finanzmönch.de</a> ·
+  <a href="https://www.youtube.com/watch?v=yMbmwPXL708">Video</a> ·
   <a href="SETUP.md">Setup</a> ·
   <a href="e2e/README.md">E2E-Tests</a> ·
   <a href="https://finanzmönch.de/api/docs/">API-Dokumentation</a>
@@ -35,6 +36,15 @@ Cloud“ an der Leibniz-FH Hannover entstanden (Gruppe 2) und läuft öffentlich
 
 > **Hinweis:** Der Server ist voraussichtlich bis zum **27.12.2026** unter
 > [finanzmönch.de](https://finanzmönch.de) erreichbar.
+
+## Video
+
+Der Screencast mit Voice-Over geht einmal durch die Anwendung und zeigt alle Pflicht-Features
+sowie die gewählten Wahlpflicht-Features:
+
+**[▶ Finanzmönch – Video-Rundgang auf YouTube](https://www.youtube.com/watch?v=yMbmwPXL708)**
+
+[![Finanzmönch – Video-Rundgang](https://img.youtube.com/vi/yMbmwPXL708/hqdefault.jpg)](https://www.youtube.com/watch?v=yMbmwPXL708)
 
 ## Warum Finanzmönch?
 
